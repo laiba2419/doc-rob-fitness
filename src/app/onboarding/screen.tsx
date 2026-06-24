@@ -16,46 +16,156 @@ import { useTheme } from '../../theme/ThemeContext';
 
 const { width: SW } = Dimensions.get('window');
 
-// ── Figma exact: Image component 275.63 × 456.7 inside 375px phone ──
 const IMG_W = SW * 0.735;
 const IMG_H = SW * 1.218;
-const GIRL_W = SW * 1.05;  // girl badi
-const GIRL_H = SW * 1.75;  // girl badi
 
-// ── Stripe sizing ──────────────────────────────────────────────────
-const S_W = IMG_W * 1.16;   // 0.60 → 0.75
-const S_H = IMG_W * 0.30;   // 0.095 → 0.11 // stripe widt // stripe height — thin so no overlap
-const GAP = S_H * 0;     // clear gap between stripes
+// ═══════════════════════════════════════════════════════════════
+//  SCREEN 1 — STRIPES
+//  top    = upar neeche (UP = kam, DOWN = zyada)
+//  left   = left right  (LEFT = kam, RIGHT = zyada)
+//  width  = lambai      (EXPAND = zyada, SQUEEZE = kam)
+//  height = motai       (EXPAND = zyada, SQUEEZE = kam)
+// ═══════════════════════════════════════════════════════════════
+const SCREEN1_TOP_STRIPE = {
+  top:    IMG_H * 0.17,   // UP ↑ kam karo | DOWN ↓ zyada karo
+  left:   IMG_W * -0.10,   // LEFT ← kam karo | RIGHT → zyada karo
+  width:  IMG_W * 0.99,   // SQUEEZE ↔ kam | EXPAND ↔ zyada
+  height: IMG_W * 0.29,   // SQUEEZE ↕ kam | EXPAND ↕ zyada
+  color:  '#A4D7F4',
+};
+const SCREEN1_MID_STRIPE = {
+  top:    IMG_H * 0.44,
+  left:   IMG_W * -0.15,
+  width:  IMG_W * 0.95,
+  height: IMG_W * 0.29,
+  color:  '#0094E8',
+};
+const SCREEN1_END_STRIPE = {
+  top:    IMG_H * 0.52,
+  left:   IMG_W * 0.16,
+  width:  IMG_W * 1,
+  height: IMG_W * 0.29,
+  color:  '#A4D7F4',
+};
 
-// ── Horizontal: top+bottom centered, middle shifts left ───────────
-const L_TB    = (IMG_W - S_W) / 6;
-const L_LIGHT_TOP = L_TB - IMG_W * 0.18;  // aur left// 1st stripe left
-const L_LIGHT_BOT = L_TB + IMG_W * 0.28 - IMG_W * 0.20;  // 3rd stripe same rakho  // right side
-const L_DARK  = L_TB - IMG_W * 0.12 - IMG_W * 0.20 + IMG_W * 0.15;  // right
-const CY    = IMG_H * 0.65;
-const MID_T = CY - S_H / 3;
-const BOT_T = MID_T + S_H * 0.2;       // neeche
-const TOP_T = BOT_T - S_H * 2.1;       // upar — same left as 3rd
+const SCREEN1_GIRL_W    = SW * 1.05;
+const SCREEN1_GIRL_H    = SW * 1.58;
+const SCREEN1_GIRL_TOP  = -SW * 0.1;
+const SCREEN1_GIRL_LEFT = -(SW * 1.18 - IMG_W) / 2.2;
 
+// ═══════════════════════════════════════════════════════════════
+//  SCREEN 2 — STRIPES
+// ═══════════════════════════════════════════════════════════════
+const SCREEN2_TOP_STRIPE = {
+  top:    IMG_H * 0.17,   // UP ↑ kam karo | DOWN ↓ zyada karo
+  left:   IMG_W * -0.10,   // LEFT ← kam karo | RIGHT → zyada karo
+  width:  IMG_W * 0.99,   // SQUEEZE ↔ kam | EXPAND ↔ zyada
+  height: IMG_W * 0.29,   // SQUEEZE ↕ kam | EXPAND ↕ zyada
+  color:  '#A4D7F4',
+};
+const SCREEN2_MID_STRIPE = {
+  top:    IMG_H * 0.44,
+  left:   IMG_W * -0.15,
+  width:  IMG_W * 0.95,
+  height: IMG_W * 0.29,
+  color:  '#0094E8',
+};
+const SCREEN2_END_STRIPE = {
+  top:    IMG_H * 0.52,
+  left:   IMG_W * 0.16,
+  width:  IMG_W * 1,
+  height: IMG_W * 0.29,
+  color:  '#A4D7F4',
+};
+
+const SCREEN2_GIRL_W    = SW * 1.05;
+const SCREEN2_GIRL_H    = SW * 1.58;
+const SCREEN2_GIRL_TOP  = -SW * 0.2;
+const SCREEN2_GIRL_LEFT = -(SW * 1.18 - IMG_W) / 2.2;
+// ═══════════════════════════════════════════════════════════════
+//  SCREEN 3 — STRIPES
+// ═══════════════════════════════════════════════════════════════
+const SCREEN3_TOP_STRIPE = {
+  top:    IMG_H * 0.17,   // UP ↑ kam karo | DOWN ↓ zyada karo
+  left:   IMG_W * -0.10,   // LEFT ← kam karo | RIGHT → zyada karo
+  width:  IMG_W * 0.99,   // SQUEEZE ↔ kam | EXPAND ↔ zyada
+  height: IMG_W * 0.29,   // SQUEEZE ↕ kam | EXPAND ↕ zyada
+  color:  '#A4D7F4',
+};
+const SCREEN3_MID_STRIPE = {
+  top:    IMG_H * 0.44,
+  left:   IMG_W * -0.15,
+  width:  IMG_W * 0.95,
+  height: IMG_W * 0.29,
+  color:  '#0094E8',
+};
+const SCREEN3_END_STRIPE = {
+  top:    IMG_H * 0.52,
+  left:   IMG_W * 0.16,
+  width:  IMG_W * 1,
+  height: IMG_W * 0.29,
+  color:  '#A4D7F4',
+};
+
+const SCREEN3_GIRL_W    = SW * 1.0;
+const SCREEN3_GIRL_H    = SW * 1.68;
+const SCREEN3_GIRL_TOP  = -SW * 0.3;
+const SCREEN3_GIRL_LEFT = -(SW * 1.18 - IMG_W) / 2.2;
+// ═══════════════════════════════════════════════════════════════
+//  SLIDES ARRAY
+// ═══════════════════════════════════════════════════════════════
 const SLIDES = [
   {
     image: require('../../../assets/images/onboarding1.png'),
     title: 'Find The Right Workout for What You Need',
+    stripes: {
+      top: SCREEN1_TOP_STRIPE,
+      mid: SCREEN1_MID_STRIPE,
+      end: SCREEN1_END_STRIPE,
+    },
+    girl: {
+      w:    SCREEN1_GIRL_W,
+      h:    SCREEN1_GIRL_H,
+      top:  SCREEN1_GIRL_TOP,
+      left: SCREEN1_GIRL_LEFT,
+    },
   },
   {
     image: require('../../../assets/images/onboarding2.png'),
     title: 'Choose Proper Workout & Diet Plan to Stay Fit.',
+    stripes: {
+      top: SCREEN2_TOP_STRIPE,
+      mid: SCREEN2_MID_STRIPE,
+      end: SCREEN2_END_STRIPE,
+    },
+    girl: {
+      w:    SCREEN2_GIRL_W,
+      h:    SCREEN2_GIRL_H,
+      top:  SCREEN2_GIRL_TOP,
+      left: SCREEN2_GIRL_LEFT,
+    },
   },
   {
     image: require('../../../assets/images/onboarding3.png'),
     title: 'Easily Track Your Daily Activity',
+    stripes: {
+      top: SCREEN3_TOP_STRIPE,
+      mid: SCREEN3_MID_STRIPE,
+      end: SCREEN3_END_STRIPE,
+    },
+    girl: {
+      w:    SCREEN3_GIRL_W,
+      h:    SCREEN3_GIRL_H,
+      top:  SCREEN3_GIRL_TOP,
+      left: SCREEN3_GIRL_LEFT,
+    },
   },
 ];
 
 export default function OnboardingScreen() {
   const { theme } = useTheme();
-  const router   = useRouter();
-  const scrollX  = useRef(new Animated.Value(0)).current;
+  const router    = useRouter();
+  const scrollX   = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<any>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -94,20 +204,48 @@ export default function OnboardingScreen() {
       >
         {SLIDES.map((slide, index) => (
           <View key={index} style={[s.slide, { width: SW }]}>
-
-            {/* ── Image container ── */}
             <View style={s.imgWrap}>
 
-<View style={[s.stripe, { top: TOP_T, left: L_LIGHT_TOP, backgroundColor: '#A4D7F4' }]} />
-<View style={[s.stripe, { top: MID_T - IMG_H * 0.09, left: L_DARK, backgroundColor: '#0094E8' }]} />
-<View style={[s.stripe, { top: BOT_T, left: L_LIGHT_BOT, backgroundColor: '#A4D7F4' }]} />
-              {/* Foot shadow */}
-              <View style={s.shadow} />
+              {/* TOP STRIPE */}
+              <View style={[s.stripe, {
+                top:             slide.stripes.top.top,
+                left:            slide.stripes.top.left,
+                width:           slide.stripes.top.width,
+                height:          slide.stripes.top.height,
+                backgroundColor: slide.stripes.top.color,
+              }]} />
 
-              {/* Girl — on top of stripes */}
-              <Image source={slide.image} style={s.img} resizeMode="contain" />
+              {/* MID STRIPE */}
+              <View style={[s.stripe, {
+                top:             slide.stripes.mid.top,
+                left:            slide.stripes.mid.left,
+                width:           slide.stripes.mid.width,
+                height:          slide.stripes.mid.height,
+                backgroundColor: slide.stripes.mid.color,
+              }]} />
+
+              {/* END STRIPE */}
+              <View style={[s.stripe, {
+                top:             slide.stripes.end.top,
+                left:            slide.stripes.end.left,
+                width:           slide.stripes.end.width,
+                height:          slide.stripes.end.height,
+                backgroundColor: slide.stripes.end.color,
+              }]} />
+
+              {/* GIRL IMAGE */}
+              <Image
+                source={slide.image}
+                style={[s.girl, {
+                  width:  slide.girl.w,
+                  height: slide.girl.h,
+                  top:    slide.girl.top,
+                  left:   slide.girl.left,
+                }]}
+                resizeMode="contain"
+              />
+
             </View>
-
           </View>
         ))}
       </Animated.ScrollView>
@@ -116,13 +254,19 @@ export default function OnboardingScreen() {
       <View style={[s.card, { backgroundColor: theme.card }]}>
         <View style={s.titleWrap}>
           {SLIDES.map((slide, index) => {
-            const range = [(index-1)*SW, index*SW, (index+1)*SW];
-            const opacity   = scrollX.interpolate({ inputRange: range, outputRange: [0,1,0], extrapolate: 'clamp' });
+            const range      = [(index-1)*SW, index*SW, (index+1)*SW];
+            const opacity    = scrollX.interpolate({ inputRange: range, outputRange: [0,1,0], extrapolate: 'clamp' });
             const translateY = scrollX.interpolate({ inputRange: range, outputRange: [10,0,10], extrapolate: 'clamp' });
             return (
               <Animated.Text
                 key={index}
-                style={[s.title, { color: theme.text, opacity, transform: [{ translateY }], position: 'absolute', width: '100%' }]}
+                style={[s.title, {
+                  color: theme.text,
+                  opacity,
+                  transform: [{ translateY }],
+                  position: 'absolute',
+                  width: '100%',
+                }]}
               >
                 {slide.title}
               </Animated.Text>
@@ -151,56 +295,38 @@ export default function OnboardingScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
 
-  skip: { position: 'absolute', top: 52, right: 20, zIndex: 10 },
-
+  skip:     { position: 'absolute', top: 52, right: 20, zIndex: 10 },
   skipText: { fontSize: 14, fontWeight: '600' },
 
   slide: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   imgWrap: {
-    width: IMG_W,
-    height: IMG_H,
+    width:    IMG_W,
+    height:   IMG_H,
     overflow: 'visible',
   },
 
   stripe: {
-    position: 'absolute',
-    width: S_W,
-    height: S_H,
-    borderRadius: 0,
-    transform: [{ rotate: '-41deg' }],
-    zIndex: 1,
+    position:     'absolute',
+    borderRadius: 4,
+    transform:    [{ rotate: '-38deg' }],
+    zIndex:       1,
   },
 
-  shadow: {
+  girl: {
     position: 'absolute',
-    bottom: 2,
-    alignSelf: 'center',
-    width: IMG_W * 0.18,
-    height: IMG_W * 0.025,
-    borderRadius: 99,
-    backgroundColor: 'rgba(0,0,0,0.08)',
-    zIndex: 2,
-  },
-
-  img: {
-    position: 'absolute',
-    top: -80,
-    left: -(GIRL_W - IMG_W) / 3,
-    width: GIRL_W,
-    height: GIRL_H,
-    zIndex: 3,
+    zIndex:   3,
   },
 
   card: {
     paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 40,
-    borderTopLeftRadius: 28,
+    paddingTop:        28,
+    paddingBottom:     40,
+    borderTopLeftRadius:  28,
     borderTopRightRadius: 28,
   },
   titleWrap: { height: 80, marginBottom: 20, justifyContent: 'center' },
-  title: { fontSize: 20, fontWeight: '700', textAlign: 'center', lineHeight: 28 },
-  dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginBottom: 24 },
-  dot: { height: 6, borderRadius: 3 },
+  title:     { fontSize: 20, fontWeight: '700', textAlign: 'center', lineHeight: 28 },
+  dotsRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginBottom: 24 },
+  dot:       { height: 6, borderRadius: 3 },
 });

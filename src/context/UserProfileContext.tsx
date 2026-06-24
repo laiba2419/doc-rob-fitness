@@ -4,11 +4,19 @@ import { createContext, ReactNode, useContext, useEffect, useState } from 'react
 const STORAGE_KEY = '@user_profile';
 
 export type UserProfile = {
+  // existing fields
   age: number | null;
-  height: number | null; // stored in cm
+  height: number | null;
   heightUnit: 'cm' | 'ft';
-  weight: number | null; // stored in kg
+  weight: number | null;
   weightUnit: 'kg' | 'lb';
+  // new fields for Edit Profile
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  mobile?: string;
+  gender?: 'Male' | 'Female' | 'Other';
+  avatarUri?: string;
 };
 
 const defaultProfile: UserProfile = {
@@ -17,18 +25,25 @@ const defaultProfile: UserProfile = {
   heightUnit: 'cm',
   weight: null,
   weightUnit: 'kg',
+  firstName: '',
+  lastName: '',
+  email: '',
+  mobile: '',
+  gender: 'Male',
+  avatarUri: undefined,
 };
 
 type UserProfileContextType = {
   profile: UserProfile;
   isLoaded: boolean;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  setProfile: (profile: UserProfile) => void; // for EditProfileScreen direct save
 };
 
 const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
 
 export function UserProfileProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<UserProfile>(defaultProfile);
+  const [profile, setProfileState] = useState<UserProfile>(defaultProfile);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -36,7 +51,7 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
       try {
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
         if (stored) {
-          setProfile({ ...defaultProfile, ...JSON.parse(stored) });
+          setProfileState({ ...defaultProfile, ...JSON.parse(stored) });
         }
       } catch (error) {
         console.warn('Failed to load user profile from storage', error);
@@ -48,7 +63,16 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
     const next = { ...profile, ...updates };
-    setProfile(next);
+    setProfileState(next);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch (error) {
+      console.warn('Failed to save user profile to storage', error);
+    }
+  };
+
+  const setProfile = async (next: UserProfile) => {
+    setProfileState(next);
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     } catch (error) {
@@ -57,7 +81,7 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserProfileContext.Provider value={{ profile, isLoaded, updateProfile }}>
+    <UserProfileContext.Provider value={{ profile, isLoaded, updateProfile, setProfile }}>
       {children}
     </UserProfileContext.Provider>
   );

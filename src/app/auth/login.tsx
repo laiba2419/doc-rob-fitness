@@ -127,20 +127,21 @@ const styles = StyleSheet.create({
   tabPill: {
     alignItems: 'flex-start',
   },
-  tabText: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  tabText: { fontSize: 14, fontWeight: '600', marginBottom: 2},
   tabUnderline: { width: 36, height: 2, borderRadius: 1 },
   topSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 28,
+    marginRight: -45,
   },
   headingCol: { flex: 1, paddingRight: 12 },
   heading: { fontSize: 24, fontWeight: '700', marginBottom: 6 },
   subtitle: { fontSize: 14 },
   bgBarsWrap: {
-    width: 50,
-    height: 72,
+    width: 180,
+    height: 195,
   },
   optionsRow: {
     flexDirection: 'row',

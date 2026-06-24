@@ -16,7 +16,7 @@ export default function ContinuePhone() {
       <BackHeader />
       <Text style={[styles.title, { color: theme.text }]}>Continue with phone</Text>
       <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-        We will send a verification code to this number
+        You'll receive 6 digit code to verify next.
       </Text>
 
       <InputField label="Phone Number" placeholder="+92 300 1234567" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
