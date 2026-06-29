@@ -1,120 +1,128 @@
 import BackHeader from '@/components/BackHeader';
-import BottomNav from '@/components/BottomNav';
-import LineChart from '@/components/LineChart';
-import { formatDate, generateId, weightEntries } from '@/data/report';
+import { weightEntries } from '@/data/report';
 import { useTheme } from '@/theme/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import {
-    Alert,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-const SCREEN_W = Dimensions.get('window').width;
+function toISODate(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
 
 export default function AddWeightScreen() {
   const { theme } = useTheme();
   const router = useRouter();
-  const [value, setValue] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const chartData = [...weightEntries]
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-7)
-    .map((e) => ({ label: formatDate(e.date), value: e.value }));
+  const [weight, setWeight] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const isValid = weight.trim().length > 0 && !Number.isNaN(Number(weight));
 
   const handleSave = () => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0 || num > 500) {
-      Alert.alert('Invalid', 'Please enter a valid weight (kg).');
-      return;
-    }
-    if (!date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      Alert.alert('Invalid', 'Please enter date as YYYY-MM-DD.');
-      return;
-    }
-    weightEntries.push({ id: generateId(), date, value: num });
-    Alert.alert('Saved!', `${num} kg logged for ${formatDate(date)}.`, [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    if (!isValid) return;
+
+    // NOTE: weightEntries is currently static demo data from data/report.ts.
+    // Pushing here updates the in-memory array for this session; wire this
+    // to your real persistence layer (AsyncStorage/DB) when ready.
+    weightEntries.push({
+      id: `w-${Date.now()}`,
+      date: toISODate(date),
+      value: Number(weight),
+    });
+
+    router.back();
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.flex, { backgroundColor: theme.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
+      <Text style={[styles.title, { color: theme.text }]}>Add Weight</Text>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        <Text style={[styles.title, { color: theme.text }]}>Log Weight</Text>
-
-        {/* Chart preview */}
-        <View style={[styles.chartCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.chartLabel, { color: theme.textSecondary }]}>Recent trend</Text>
-          <LineChart data={chartData} width={SCREEN_W - 72} height={120} showLabels={false} />
+      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        {/* Weight input */}
+        <View style={styles.fieldRow}>
+          <TextInput
+            style={[styles.weightInput, { color: theme.text, borderColor: theme.border }]}
+            placeholder="50"
+            placeholderTextColor={theme.textSecondary}
+            keyboardType="numeric"
+            value={weight}
+            onChangeText={setWeight}
+          />
+          <Text style={[styles.unitLabel, { color: theme.textSecondary }]}>kg</Text>
         </View>
 
-        {/* Form */}
-        <View style={[styles.formCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Weight (kg)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
-            placeholder="e.g. 75.5"
-            placeholderTextColor={theme.placeholder}
-            keyboardType="decimal-pad"
-            value={value}
-            onChangeText={setValue}
-          />
+        {/* Date picker trigger */}
+        <TouchableOpacity
+          style={[styles.dateRow, { borderColor: theme.border }]}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Text style={[styles.dateText, { color: theme.text }]}>{toISODate(date)}</Text>
+          <Ionicons name="calendar-outline" size={18} color={theme.textSecondary} />
+        </TouchableOpacity>
 
-          <Text style={[styles.fieldLabel, { color: theme.textSecondary, marginTop: 14 }]}>Date (YYYY-MM-DD)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
-            placeholder="2025-06-30"
-            placeholderTextColor={theme.placeholder}
+        {showDatePicker && (
+          <DateTimePicker
             value={date}
-            onChangeText={setDate}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={(_, selected) => {
+              setShowDatePicker(Platform.OS === 'ios');
+              if (selected) setDate(selected);
+            }}
           />
+        )}
 
-          <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: theme.primary }]}
-            onPress={handleSave}
-          >
-            <Text style={styles.saveBtnText}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
-      <BottomNav />
-    </KeyboardAvoidingView>
+        {/* Save */}
+        <TouchableOpacity
+          style={[styles.saveBtn, { backgroundColor: isValid ? theme.primary : theme.border }]}
+          onPress={handleSave}
+          disabled={!isValid}
+        >
+          <Text style={styles.saveBtnText}>Save</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  scroll: { paddingHorizontal: 20, paddingBottom: 100 },
-  title: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
-  chartCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16 },
-  chartLabel: { fontSize: 12, marginBottom: 8 },
-  formCard: { borderRadius: 16, borderWidth: 1, padding: 16 },
-  fieldLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6 },
-  input: {
-    borderRadius: 10,
+  container: { flex: 1 },
+  title: { fontSize: 20, fontWeight: '700', marginHorizontal: 20, marginBottom: 16 },
+  card: {
+    marginHorizontal: 20,
+    borderRadius: 16,
     borderWidth: 1,
+    padding: 20,
+    gap: 16,
+  },
+  fieldRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  weightInput: {
+    flex: 1,
+    fontSize: 28,
+    fontWeight: '700',
+    borderBottomWidth: 1.5,
+    paddingVertical: 6,
+  },
+  unitLabel: { fontSize: 16, fontWeight: '600' },
+  dateRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 15,
   },
+  dateText: { fontSize: 14, fontWeight: '500' },
   saveBtn: {
-    marginTop: 20,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',

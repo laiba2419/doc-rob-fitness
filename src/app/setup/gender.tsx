@@ -20,6 +20,7 @@ export default function InputGender() {
       <View style={styles.row}>
         {(['male', 'female'] as const).map((gender) => {
           const isSelected = selected === gender;
+          const isDimmed = selected !== null && !isSelected;
           const imgSource =
             gender === 'male'
               ? require('../../../assets/images/male.png')
@@ -32,22 +33,38 @@ export default function InputGender() {
               onPress={() => setSelected(gender)}
               activeOpacity={0.85}
             >
-              {/* Card — starts lower, image overflows from top */}
+              {/* Card background */}
               <View
                 style={[
                   styles.card,
                   {
-                    backgroundColor: isSelected ? theme.primary : theme.surface,
-                    borderColor: isSelected ? theme.primary : theme.border,
+                    backgroundColor: isSelected ? theme.primary : '#FFFFFF',
+                    borderColor: isSelected ? theme.primary : '#E2E2E2',
+                    borderWidth: isSelected ? 0 : 1.5,
                   },
                 ]}
               />
 
-              {/* Image — anchored to top of wrapper, overflows card top */}
-              <Image source={imgSource} style={styles.image} resizeMode="contain" />
+              {/* Image — grayscale jab doosra select ho, koi opacity drop nahi */}
+              <Image
+                source={imgSource}
+                style={[
+                  styles.image,
+                  // @ts-ignore - RN's CSS-style filter, no native lib needed
+                  isDimmed && { filter: [{ grayscale: 1 }] },
+                ]}
+                resizeMode="contain"
+              />
 
-              {/* Label inside card at bottom */}
-              <Text style={[styles.label, { color: isSelected ? '#FFFFFF' : theme.text }]}>
+              <Text
+                style={[
+                  styles.label,
+                  {
+                    color: isSelected ? theme.text : '#9E9E9E',
+                    fontWeight: isSelected ? '700' : '500',
+                  },
+                ]}
+              >
                 {gender === 'male' ? 'Male' : 'Female'}
               </Text>
             </TouchableOpacity>
@@ -65,48 +82,55 @@ export default function InputGender() {
   );
 }
 
-// Card height aur overflow amount
-const OVERFLOW_TOP = 100;  // kitna upar se bahar nikle
-const CARD_HEIGHT = 300;
-const WRAPPER_HEIGHT = CARD_HEIGHT + OVERFLOW_TOP;
+const CARD_HEIGHT = 220;
+const IMG_HEIGHT = 310;
+const WRAPPER_HEIGHT = IMG_HEIGHT + 40;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, paddingTop: 60 },
-  title: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
-  row: { flexDirection: 'row', gap: 16 },
+  container: {
+    flex: 1,
+    padding: 24,
+    paddingTop: 60,
+  },
 
-  // Wrapper = card + overflow space upar
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 24,
+  },
+
+  row: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+
   cardWrapper: {
     flex: 1,
     height: WRAPPER_HEIGHT,
     alignItems: 'center',
-    justifyContent: 'flex-end',
   },
 
-  // Card occupies bottom portion of wrapper
   card: {
     position: 'absolute',
-    bottom: 0,
+    top: (WRAPPER_HEIGHT - CARD_HEIGHT) / 2 - 10,
     left: 0,
     right: 0,
     height: CARD_HEIGHT,
     borderRadius: 16,
-    borderWidth: 2,
   },
 
-  // Image: top of wrapper se shuru, neeche tak
-  // Sir upar overflow karta hai, feet card ke andar
   image: {
     position: 'absolute',
-    top: 0,           // wrapper ke top se — card se upar nikle ga
-    width: '100%',
-    height: WRAPPER_HEIGHT - 30, // label ke liye thora space
+    top: 0,
+    width: '170%',
+    height: 320,
+    zIndex: 2,
   },
 
   label: {
+    position: 'absolute',
+    bottom: 6,
     fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 16,
-    zIndex: 1,
+    zIndex: 3,
   },
 });

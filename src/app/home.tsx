@@ -2,6 +2,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import BottomNav from '@/components/BottomNav';
+import CalendarPickerModal from '@/components/CalendarPickerModal';
 import { useMemo, useState } from 'react';
 import {
   Image,
@@ -15,9 +16,6 @@ import {
 } from 'react-native';
 
 // ---------- Body parts (real photos, exported from Figma) ----------
-// NOTE: ids here are the canonical body-part ids used across the whole app
-// (Home, /exercises/body-part, and /exercises/list filters). Keep them in
-// sync if you add/rename a body part anywhere.
 const bodyParts = [
   { id: 'leg', label: 'Leg', image: require('../../assets/images/body-parts/leg.png') },
   { id: 'shoulders', label: 'Shoulders', image: require('../../assets/images/body-parts/shoulders.png') },
@@ -31,57 +29,68 @@ const bodyParts = [
   { id: 'upper-body', label: 'Upper Body', image: require('../../assets/images/body-parts/upper-body.png') },
 ];
 
-// ---------- Equipment (real photos, label rendered below each image) ----------
-// NOTE: ids here are canonical across Home, /exercises/equipment, and the
-// equipment filter in /exercises/list.
+// ---------- Equipment ----------
 const equipmentExercises = [
-  {
-    id: 'dumbbell',
-    label: 'Dumbbells',
-    image: require('../../assets/images/equipment/Dumbbells.png'),
-  },
-  {
-    id: 'jumprope',
-    label: 'Jump Rope',
-    image: require('../../assets/images/equipment/Jumprope.png'),
-  },
-  {
-    id: 'kettlebell',
-    label: 'Kettlebells',
-    image: require('../../assets/images/equipment/kettlebells.png'),
-  },
-  {
-    id: 'bench',
-    label: 'Bench',
-    image: require('../../assets/images/equipment/bench.png'),
-  },
-  {
-    id: 'barbell',
-    label: 'Barbell',
-    image: require('../../assets/images/equipment/Barbell.png'),
-  },
-  {
-    id: 'gymball',
-    label: 'Exercise Ball',
-    image: require('../../assets/images/equipment/exercise ball.png'),
-  },
-  {
-    id: 'weightplate',
-    label: 'Weight Plate',
-    image: require('../../assets/images/equipment/weight plate.png'),
-  },
+  { id: 'dumbbell', label: 'Dumbbells', image: require('../../assets/images/equipment/Dumbbells.png') },
+  { id: 'jumprope', label: 'Jump Rope', image: require('../../assets/images/equipment/Jumprope.png') },
+  { id: 'kettlebell', label: 'Kettlebells', image: require('../../assets/images/equipment/kettlebells.png') },
+  { id: 'bench', label: 'Bench', image: require('../../assets/images/equipment/bench.png') },
+  { id: 'barbell', label: 'Barbell', image: require('../../assets/images/equipment/Barbell.png') },
+  { id: 'gymball', label: 'Exercise Ball', image: require('../../assets/images/equipment/exercise ball.png') },
+  { id: 'weightplate', label: 'Weight Plate', image: require('../../assets/images/equipment/weight plate.png') },
 ];
 
-// ---------- Workout Types: 7 photos. Export from Figma and save them in
-// assets/images/workout-types/ as "type-1.png" through "type-7.png" ----------
+// ---------- Workout Types: 7 photos, with Pro badge + meta like Figma ----------
 const workoutTypes = [
-  { id: 'type-1', label: 'Strength', image: require('../../assets/images/workout-types/type-1.png') },
-  { id: 'type-2', label: 'Cardio', image: require('../../assets/images/workout-types/type-2.png') },
-  { id: 'type-3', label: 'Yoga', image: require('../../assets/images/workout-types/type-3.png') },
-  { id: 'type-4', label: 'HIIT', image: require('../../assets/images/workout-types/type-4.png') },
-  { id: 'type-5', label: 'Stretching', image: require('../../assets/images/workout-types/type-5.png') },
-  { id: 'type-6', label: 'Crossfit', image: require('../../assets/images/workout-types/type-6.png') },
-  { id: 'type-7', label: 'Pilates', image: require('../../assets/images/workout-types/type-7.png') },
+  {
+    id: 'type-1',
+    label: 'Total body & Cardio (gym)',
+    meta: 'Home Workout | Beginner',
+    pro: true,
+    image: require('../../assets/images/workout-types/type-1.png'),
+  },
+  {
+    id: 'type-2',
+    label: 'Weight Gain Workouts',
+    meta: 'Gym Workout | Advance',
+    pro: true,
+    image: require('../../assets/images/workout-types/type-2.png'),
+  },
+  {
+    id: 'type-3',
+    label: 'Abs Workout',
+    meta: 'Gym Workout | Intermediate',
+    pro: true,
+    image: require('../../assets/images/workout-types/type-3.png'),
+  },
+  {
+    id: 'type-4',
+    label: 'Moderate Office Workout',
+    meta: 'Gym Workout | Intermediate',
+    pro: true,
+    image: require('../../assets/images/workout-types/type-4.png'),
+  },
+  {
+    id: 'type-5',
+    label: 'Home - No Material',
+    meta: 'Gym Workout | Intermediate',
+    pro: true,
+    image: require('../../assets/images/workout-types/type-5.png'),
+  },
+  {
+    id: 'type-6',
+    label: 'Total body | Free Weight',
+    meta: 'Gym Workout | Intermediate',
+    pro: true,
+    image: require('../../assets/images/workout-types/type-6.png'),
+  },
+  {
+    id: 'type-7',
+    label: 'Back & Biceps Blitz',
+    meta: 'Gym Workout | Intermediate',
+    pro: true,
+    image: require('../../assets/images/workout-types/type-7.png'),
+  },
 ];
 
 // Demo data: selecting a workout type below shows these exercises
@@ -90,27 +99,50 @@ const workoutTypeExercises: Record<string, { id: string; title: string; meta: st
     { id: 's1', title: 'Deadlift', meta: '4 Sets | 8 Reps' },
     { id: 's2', title: 'Bench Press', meta: '4 Sets | 10 Reps' },
   ],
-  'type-2': [
-    { id: 'c1', title: 'Jump Rope Sprint', meta: '5 Rounds | 1 Min' },
-    { id: 'c2', title: 'Treadmill Run', meta: '20 Mins' },
-  ],
-  'type-3': [{ id: 'y1', title: 'Sun Salutation Flow', meta: '15 Mins' }],
-  'type-4': [{ id: 'h1', title: 'Burpee Circuit', meta: '4 Rounds | 30 Sec' }],
-  'type-5': [{ id: 'st1', title: 'Hamstring Stretch', meta: '3 Sets | 30 Sec' }],
-  'type-6': [{ id: 'cf1', title: 'WOD: Push-Pull-Squat', meta: '20 Mins' }],
-  'type-7': [{ id: 'p1', title: 'Pilates Core Flow', meta: '18 Mins' }],
+  'type-2': [{ id: 'c1', title: 'Weighted Squats', meta: '4 Sets | 10 Reps' }],
+  'type-3': [{ id: 'y1', title: 'Plank Hold', meta: '3 Sets | 45 Sec' }],
+  'type-4': [{ id: 'h1', title: 'Desk Stretch Routine', meta: '15 Mins' }],
+  'type-5': [{ id: 'st1', title: 'Bodyweight Circuit', meta: '4 Rounds | 30 Sec' }],
+  'type-6': [{ id: 'cf1', title: 'Free Weight Full Body', meta: '20 Mins' }],
+  'type-7': [{ id: 'p1', title: 'Back & Biceps Superset', meta: '4 Sets | 12 Reps' }],
 };
 
-// ---------- Workout Levels: 3 photos. Export from Figma and save them in
-// assets/images/levels/ as "beginner.png", "intermediate.png",
-// "advance.png" ----------
+// ---------- Workout Levels: same card pattern as Workout Types ----------
 const workoutLevels = [
-  { id: 'beginner', label: 'Beginner', image: require('../../assets/images/levels/beginner.png') },
-  { id: 'intermediate', label: 'Intermediate', image: require('../../assets/images/levels/intermediate.png') },
-  { id: 'advance', label: 'Advance', image: require('../../assets/images/levels/advance.png') },
+  {
+    id: 'beginner',
+    label: 'Beginner',
+    meta: 'Gym Workout | Beginner',
+    image: require('../../assets/images/levels/beginner.png'),
+  },
+  {
+    id: 'advance-1',
+    label: 'Advance',
+    meta: 'Gym Workout | Advance',
+    image: require('../../assets/images/levels/advance.png'),
+  },
+  {
+    id: 'intermediate',
+    label: 'Intermediate',
+    meta: 'Gym Workout | Intermediate',
+    image: require('../../assets/images/levels/intermediate.png'),
+  },
+  {
+    id: 'advance-2',
+    label: 'Advance',
+    meta: 'Gym Workout | Advance',
+    image: require('../../assets/images/levels/advance.png'),
+  },
 ];
 
-// ---------- Schedule: the user can pick their own workout ----------
+const workoutLevelExercises: Record<string, { id: string; title: string; meta: string }[]> = {
+  beginner: [{ id: 'b1', title: 'Bodyweight Basics', meta: '3 Sets | 12 Reps' }],
+  intermediate: [{ id: 'i1', title: 'Dumbbell Circuit', meta: '4 Sets | 10 Reps' }],
+  'advance-1': [{ id: 'a1', title: 'Heavy Compound Lifts', meta: '5 Sets | 5 Reps' }],
+  'advance-2': [{ id: 'a2', title: 'Advanced HIIT Burn', meta: '20 Mins' }],
+};
+
+// ---------- Schedule: workouts the user can pick per day ----------
 const workoutOptions = [
   { id: 'leg-day', title: 'Leg Day', meta: '4 Sets | 35 Mins' },
   { id: 'upper-lower-chest', title: 'Upper, Lower Chest', meta: '4 Sets | 30 Mins' },
@@ -161,12 +193,35 @@ export default function HomeScreen() {
 
   const weekRangeLabel = `${formatShort(weekDates[0])} - ${formatShort(weekDates[6])}, ${weekDates[0].getFullYear()}`;
 
-  const [selectedWorkout, setSelectedWorkout] = useState(workoutOptions[1]);
+  // Per-day schedule: { "2026-06-29": "leg-day", "2026-06-30": "push-day", ... }
+  // User calendar se kisi bhi date pe tap kare (chahe is week mein ho ya
+  // kisi doosre mahine mein), us din ke liye apna marzi ka workout assign
+  // kar sakta hai — "28 June - Leg Day", "29 June - Push Day" wagera.
+  const [daySchedule, setDaySchedule] = useState<Record<string, string>>({
+    [dateKey(today)]: 'upper-lower-chest',
+  });
   const [workoutPickerVisible, setWorkoutPickerVisible] = useState(false);
+  const [calendarVisible, setCalendarVisible] = useState(false);
+
+  // Selected day ke liye workout resolve karo. Agar us din kuch assign
+  // nahi hua to "Add a workout" wala empty state dikhao.
+  const selectedWorkout = useMemo(() => {
+    const assignedId = daySchedule[selectedDateKey];
+    return workoutOptions.find((w) => w.id === assignedId) ?? null;
+  }, [daySchedule, selectedDateKey]);
+
+  // Selected date ko poori tarah dikhao (jaise "28 June, 2026") — agar yeh
+  // current week-row mein nahi hai (calendar se kisi doosre mahine ka din
+  // chuna gaya), to seedha selectedDateKey se parse karke label banao.
+  const selectedDateLabel = useMemo(() => {
+    const fromWeek = weekDates.find((wd) => dateKey(wd) === selectedDateKey);
+    const d = fromWeek ?? new Date(selectedDateKey + 'T00:00:00');
+    return `${formatShort(d)}, ${d.getFullYear()}`;
+  }, [weekDates, selectedDateKey]);
 
   const [expandedWorkoutType, setExpandedWorkoutType] = useState<string | null>(null);
+  const [expandedWorkoutLevel, setExpandedWorkoutLevel] = useState<string | null>(null);
 
-  // Body part / Equipment -> general exercise list, filtered by that tag.
   const handleBodyPartPress = (partId: string) => {
     router.push(`/exercises/list?part=${partId}`);
   };
@@ -175,21 +230,30 @@ export default function HomeScreen() {
     router.push(`/exercises/list?equipment=${equipmentId}`);
   };
 
-  // Schedule card -> exercise list filtered by that specific planned workout.
   const handleWorkoutPress = (workoutId: string) => {
     router.push(`/exercises/list?workout=${workoutId}`);
   };
 
-  // Workout Levels -> exercise list filtered by difficulty. No dedicated
-  // full page here since there are only 3 fixed cards (unlike Body Part /
-  // Equipment, a "See All" grid isn't needed) -- going straight to the
-  // filtered list is the simplest option.
-  const handleLevelPress = (levelId: string) => {
-    router.push(`/exercises/list?level=${levelId}`);
-  };
-
   const handleWorkoutTypePress = (typeId: string) => {
     setExpandedWorkoutType((prev) => (prev === typeId ? null : typeId));
+  };
+
+  const handleWorkoutLevelPress = (levelId: string) => {
+    setExpandedWorkoutLevel((prev) => (prev === levelId ? null : levelId));
+  };
+
+  // Modal se workout pick hone par sirf selected day ke liye assign hota hai
+  const assignWorkoutToSelectedDay = (workoutId: string) => {
+    setDaySchedule((prev) => ({ ...prev, [selectedDateKey]: workoutId }));
+    setWorkoutPickerVisible(false);
+  };
+
+  // Calendar popup se date chuni jaye to woh selected ban jati hai aur
+  // popup band ho jata hai — agar woh date current week-row se bahar hai
+  // (kisi doosre mahine ki), week-row apni jagah waisa hi rehta hai, sirf
+  // Schedule section neeche us nayi date ka data dikhata hai.
+  const handleCalendarSelectDate = (key: string) => {
+    setSelectedDateKey(key);
   };
 
   return (
@@ -202,7 +266,6 @@ export default function HomeScreen() {
         {/* Header: DP left, greeting, notification bell right */}
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
-            {/* Note: replace with the real profile photo, currently a placeholder icon */}
             <View style={[styles.avatar, { backgroundColor: theme.surface }]}>
               <Ionicons name="person" size={20} color={theme.text} />
             </View>
@@ -234,7 +297,8 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* This Week - live calendar, current actual date/year */}
+        {/* This Week — bilkul wahi UI, bas ek calendar icon add hua jo
+            month-view popup kholta hai */}
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>This Week</Text>
           <View style={styles.weekNavRow}>
@@ -245,6 +309,12 @@ export default function HomeScreen() {
             <TouchableOpacity onPress={() => setWeekOffset((w) => w + 1)}>
               <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setCalendarVisible(true)}
+              style={[styles.calendarIconBtn, { backgroundColor: theme.surface }]}
+            >
+              <Ionicons name="calendar-outline" size={16} color={theme.primary} />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -253,6 +323,7 @@ export default function HomeScreen() {
             const key = dateKey(d);
             const isSelected = selectedDateKey === key;
             const isToday = dateKey(today) === key;
+            const hasWorkout = !!daySchedule[key];
             return (
               <TouchableOpacity
                 key={key}
@@ -266,45 +337,72 @@ export default function HomeScreen() {
                   {dayLetters[index]}
                 </Text>
                 <Text style={[styles.dayNumber, { color: isSelected ? '#FFFFFF' : theme.text }]}>{d.getDate()}</Text>
+                {/* Chote dot se pata chalta hai kis din workout schedule hai */}
+                {hasWorkout && !isSelected && (
+                  <View style={[styles.scheduleDot, { backgroundColor: theme.primary }]} />
+                )}
               </TouchableOpacity>
             );
           })}
         </View>
 
-        {/* Schedule */}
-        <Text style={[styles.subHeading, { color: theme.text, marginTop: 24 }]}>Schedule</Text>
+        {/* Schedule — selected din (chahe week-row se ho ya calendar popup
+            se kisi doosre mahine se) ke hisab se workout dikhata hai */}
+        <View style={[styles.sectionHeaderRow, { marginTop: 24, marginBottom: 12 }]}>
+          <Text style={[styles.subHeading, { color: theme.text, marginBottom: 0 }]}>
+            Schedule · {selectedDateLabel}
+          </Text>
+        </View>
 
         <TouchableOpacity style={styles.bannerCard}>
           <Image
-  source={require('../../assets/images/schedule/beginner-fitness-plan.png.png')}
-  style={styles.bannerImage}
-  resizeMode="cover"
-/>
+            source={require('../../assets/images/schedule/beginner-fitness-plan.png.png')}
+            style={styles.bannerImage}
+            resizeMode="cover"
+          />
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.scheduleCard, { backgroundColor: theme.surface }]}
-          onPress={() => handleWorkoutPress(selectedWorkout.id)}
-        >
-          <View style={[styles.imagePlaceholder, { width: 56, height: 56 }]}>
-            <Ionicons name="fitness-outline" size={26} color={theme.textSecondary} />
-          </View>
-          <View style={styles.scheduleInfo}>
-            <Text style={[styles.scheduleTitle, { color: theme.text }]}>{selectedWorkout.title}</Text>
-            <Text style={[styles.scheduleMeta, { color: theme.textSecondary }]}>{selectedWorkout.meta}</Text>
-          </View>
+        {selectedWorkout ? (
           <TouchableOpacity
-            style={[styles.changeBtn, { borderColor: theme.border }]}
-            onPress={(e) => {
-              e.stopPropagation();
-              setWorkoutPickerVisible(true);
-            }}
+            style={[styles.scheduleCard, { backgroundColor: theme.surface }]}
+            onPress={() => handleWorkoutPress(selectedWorkout.id)}
           >
-            <Ionicons name="create-outline" size={16} color={theme.textSecondary} />
+            <View style={[styles.imagePlaceholder, { width: 56, height: 56 }]}>
+              <Ionicons name="fitness-outline" size={26} color={theme.textSecondary} />
+            </View>
+            <View style={styles.scheduleInfo}>
+              <Text style={[styles.scheduleTitle, { color: theme.text }]}>{selectedWorkout.title}</Text>
+              <Text style={[styles.scheduleMeta, { color: theme.textSecondary }]}>{selectedWorkout.meta}</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.changeBtn, { borderColor: theme.border }]}
+              onPress={(e) => {
+                e.stopPropagation();
+                setWorkoutPickerVisible(true);
+              }}
+            >
+              <Ionicons name="create-outline" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
+        ) : (
+          // Empty state — is din ke liye abhi koi workout assign nahi hua
+          <TouchableOpacity
+            style={[styles.emptyScheduleCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+            onPress={() => setWorkoutPickerVisible(true)}
+          >
+            <View style={[styles.imagePlaceholder, { width: 44, height: 44 }]}>
+              <Ionicons name="add" size={22} color={theme.primary} />
+            </View>
+            <View style={styles.scheduleInfo}>
+              <Text style={[styles.scheduleTitle, { color: theme.text }]}>Add a workout</Text>
+              <Text style={[styles.scheduleMeta, { color: theme.textSecondary }]}>
+                No workout scheduled for {selectedDateLabel}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
 
-        {/* Body parts - full scrollable list with real photos */}
+        {/* Body parts */}
         <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
           <Text style={[styles.subHeading, { color: theme.text, marginBottom: 0 }]}>Body parts Exercise</Text>
           <TouchableOpacity onPress={() => router.push('/exercises/body-part')}>
@@ -320,7 +418,7 @@ export default function HomeScreen() {
           ))}
         </ScrollView>
 
-        {/* Equipment - full scrollable list with real photos (label baked into image) */}
+        {/* Equipment */}
         <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
           <Text style={[styles.subHeading, { color: theme.text, marginBottom: 0 }]}>Equipment-Based Exercise</Text>
           <TouchableOpacity onPress={() => router.push('/exercises/equipment')}>
@@ -340,7 +438,8 @@ export default function HomeScreen() {
           ))}
         </ScrollView>
 
-        {/* Workout Types - 7 slots, tapping expands a list right here on Home */}
+        {/* Workout Types — bade cards, horizontal scroll, Pro badge + meta,
+            click pe yahin home page par expand hota hai */}
         <Text style={[styles.subHeading, { color: theme.text, marginTop: 24 }]}>Workout Types</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
           {workoutTypes.map((type) => {
@@ -349,17 +448,25 @@ export default function HomeScreen() {
               <TouchableOpacity
                 key={type.id}
                 onPress={() => handleWorkoutTypePress(type.id)}
-                style={styles.workoutTypeItem}
+                style={[
+                  styles.bigCard,
+                  { borderColor: isActive ? theme.primary : 'transparent', borderWidth: isActive ? 2 : 0 },
+                ]}
               >
-                <Image
-                  source={type.image}
-                  style={[
-                    styles.workoutTypeCircle,
-                    { borderWidth: isActive ? 2 : 0, borderColor: theme.primary },
-                  ]}
-                  resizeMode="cover"
-                />
-                <Text style={[styles.bodyPartLabel, { color: theme.textSecondary }]}>{type.label}</Text>
+                <Image source={type.image} style={styles.bigCardImage} resizeMode="cover" />
+                {type.pro && (
+                  <View style={[styles.proBadge, { backgroundColor: theme.primary }]}>
+                    <Text style={styles.proBadgeText}>PRO</Text>
+                  </View>
+                )}
+                <View style={styles.bigCardOverlay}>
+                  <Text style={styles.bigCardTitle} numberOfLines={2}>
+                    {type.label}
+                  </Text>
+                  <Text style={styles.bigCardMeta} numberOfLines={1}>
+                    {type.meta}
+                  </Text>
+                </View>
               </TouchableOpacity>
             );
           })}
@@ -382,49 +489,99 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Workout Levels - real photos */}
+        {/* Workout Levels — same bade-card pattern, horizontal scroll,
+            click pe yahin home page par expand hota hai */}
         <Text style={[styles.subHeading, { color: theme.text, marginTop: 24 }]}>Workout Levels</Text>
-        <View style={styles.levelsRow}>
-          {workoutLevels.map((level) => (
-            <TouchableOpacity
-              key={level.id}
-              style={styles.levelCard}
-              onPress={() => handleLevelPress(level.id)}
-            >
-              <Image source={level.image} style={styles.levelImage} resizeMode="cover" />
-              <View style={styles.levelOverlay}>
-                <Text style={styles.levelCardText}>{level.label}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+          {workoutLevels.map((level) => {
+            const isActive = expandedWorkoutLevel === level.id;
+            return (
+              <TouchableOpacity
+                key={level.id}
+                onPress={() => handleWorkoutLevelPress(level.id)}
+                style={[
+                  styles.bigCard,
+                  { borderColor: isActive ? theme.primary : 'transparent', borderWidth: isActive ? 2 : 0 },
+                ]}
+              >
+                <Image source={level.image} style={styles.bigCardImage} resizeMode="cover" />
+                <View style={styles.bigCardOverlay}>
+                  <Text style={styles.bigCardTitle} numberOfLines={2}>
+                    {level.label}
+                  </Text>
+                  <Text style={styles.bigCardMeta} numberOfLines={1}>
+                    {level.meta}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
 
-        {/* Workout picker modal - opens from the "pencil" icon on the Schedule card */}
-        <Modal visible={workoutPickerVisible} transparent animationType="slide" onRequestClose={() => setWorkoutPickerVisible(false)}>
-          <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={() => setWorkoutPickerVisible(false)} />
+        {expandedWorkoutLevel && (
+          <View style={[styles.expandedList, { backgroundColor: theme.surface }]}>
+            {(workoutLevelExercises[expandedWorkoutLevel] || []).map((ex) => (
+              <TouchableOpacity key={ex.id} style={styles.expandedRow} onPress={() => handleWorkoutPress(ex.id)}>
+                <View style={[styles.imagePlaceholder, { width: 44, height: 44 }]}>
+                  <Ionicons name="barbell-outline" size={20} color={theme.textSecondary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.exTitle, { color: theme.text }]}>{ex.title}</Text>
+                  <Text style={[styles.exMeta, { color: theme.textSecondary }]}>{ex.meta}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Workout picker modal — sirf selectedDateKey ke liye assign karta hai */}
+        <Modal
+          visible={workoutPickerVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setWorkoutPickerVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.backdrop}
+            activeOpacity={1}
+            onPress={() => setWorkoutPickerVisible(false)}
+          />
           <View style={[styles.sheet, { backgroundColor: theme.background }]}>
-            <Text style={[styles.sheetTitle, { color: theme.text }]}>Select today's workout</Text>
+            <Text style={[styles.sheetTitle, { color: theme.text }]}>
+              Select workout for {selectedDateLabel}
+            </Text>
             {workoutOptions.map((opt) => (
               <TouchableOpacity
                 key={opt.id}
                 style={styles.sheetRow}
-                onPress={() => {
-                  setSelectedWorkout(opt);
-                  setWorkoutPickerVisible(false);
-                }}
+                onPress={() => assignWorkoutToSelectedDay(opt.id)}
               >
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.exTitle, { color: theme.text }]}>{opt.title}</Text>
                   <Text style={[styles.exMeta, { color: theme.textSecondary }]}>{opt.meta}</Text>
                 </View>
-                {selectedWorkout.id === opt.id && <Ionicons name="checkmark-circle" size={20} color={theme.primary} />}
+                {selectedWorkout?.id === opt.id && (
+                  <Ionicons name="checkmark-circle" size={20} color={theme.primary} />
+                )}
               </TouchableOpacity>
             ))}
           </View>
         </Modal>
+
+        {/* Month calendar popup — "This Week" ke calendar icon se khulta hai.
+            User kisi bhi mahine ki kisi bhi date pe tap kar sakta hai; us
+            date ke liye phir Schedule section se workout assign hota hai. */}
+        <CalendarPickerModal
+          visible={calendarVisible}
+          onClose={() => setCalendarVisible(false)}
+          selectedDateKey={selectedDateKey}
+          onSelectDate={handleCalendarSelectDate}
+          scheduledDateKeys={Object.keys(daySchedule)}
+        />
       </ScrollView>
 
-      {/* Floating FitBot button - raised so it sits above BottomNav instead of overlapping it */}
+      {/* Floating FitBot button */}
       <TouchableOpacity
         style={[styles.fitbotFab, { backgroundColor: theme.primary }]}
         onPress={() => router.push('/fitbot')}
@@ -463,14 +620,30 @@ const styles = StyleSheet.create({
   sectionLink: { fontSize: 13, fontWeight: '600' },
   weekNavRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dateLabel: { fontSize: 12, fontWeight: '500' },
+  calendarIconBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 4,
+  },
   subHeading: { fontSize: 15, fontWeight: '600', marginBottom: 12 },
   horizontalScroll: { marginBottom: 4 },
 
   weekRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  dayPill: { width: 38, height: 56, borderRadius: 14, justifyContent: 'center', alignItems: 'center', gap: 4 },
+  dayPill: {
+    width: 38,
+    height: 56,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+  },
   dayLetter: { fontSize: 11 },
   dayNumber: { fontSize: 14, fontWeight: '700' },
   todayDot: { position: 'absolute', top: 4, width: 6, height: 6, borderRadius: 3 },
+  scheduleDot: { position: 'absolute', bottom: 4, width: 5, height: 5, borderRadius: 2.5 },
 
   imagePlaceholder: {
     borderRadius: 12,
@@ -490,6 +663,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  emptyScheduleCard: {
+    width: '100%',
+    borderRadius: 16,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+  },
   scheduleInfo: { flex: 1 },
   scheduleTitle: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
   scheduleMeta: { fontSize: 12 },
@@ -504,34 +687,40 @@ const styles = StyleSheet.create({
   equipmentImage: { width: '100%', height: '100%' },
   equipmentLabel: { fontSize: 12, fontWeight: '600', marginTop: 6, textAlign: 'center' },
 
-  workoutTypeItem: { alignItems: 'center', marginRight: 16 },
-  workoutTypeCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 6,
+  bigCard: {
+    width: 220,
+    height: 130,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginRight: 12,
+    position: 'relative',
   },
+  bigCardImage: { width: '100%', height: '100%', position: 'absolute' },
+  bigCardOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  bigCardTitle: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+  bigCardMeta: { color: '#E0E0E0', fontSize: 11, marginTop: 2 },
+  proBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  proBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '700' },
 
   expandedList: { borderRadius: 14, padding: 8, marginTop: 8 },
   expandedRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 8 },
   exTitle: { fontSize: 13, fontWeight: '600', marginBottom: 2 },
   exMeta: { fontSize: 11 },
-
-  levelsRow: { flexDirection: 'row', gap: 12 },
-  levelCard: { flex: 1, height: 90, borderRadius: 16, overflow: 'hidden' },
-  levelImage: { width: '100%', height: '100%' },
-  levelOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingVertical: 10,
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  levelCardText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
 
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
   sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 30 },
