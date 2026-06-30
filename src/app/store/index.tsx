@@ -16,9 +16,6 @@ import {
     View,
 } from 'react-native';
 
-const CARD_BG = '#FFFFFF';
-const CARD_TEXT = '#1A1A1A';
-
 export default function StoreHomeScreen() {
   const { theme } = useTheme();
   const router = useRouter();
@@ -30,7 +27,6 @@ export default function StoreHomeScreen() {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Text style={[styles.headerTitle, { color: theme.text }]}>Store</Text>
 
-      {/* Search Bar */}
       <View style={[styles.searchBar, { borderColor: theme.border }]}>
         <TextInput
           style={[styles.searchInput, { color: theme.text }]}
@@ -62,13 +58,13 @@ export default function StoreHomeScreen() {
               {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
-                  style={[styles.categoryCard, { backgroundColor: CARD_BG }]}
+                  style={styles.categoryCard}
                   onPress={() => router.push({ pathname: '/store/category', params: { id: cat.id } } as any)}
                 >
                   <View style={styles.categoryImageWrap}>
                    <Image source={cat.image} style={styles.categoryImage} resizeMode="contain" />
                   </View>
-                  <Text style={[styles.categoryLabel, { color: CARD_TEXT }]} numberOfLines={1}>
+                  <Text style={[styles.categoryLabel, { color: theme.text }]} numberOfLines={1}>
                     {cat.label}
                   </Text>
                 </TouchableOpacity>
@@ -102,7 +98,7 @@ export default function StoreHomeScreen() {
               style={styles.productCard}
               onPress={() => router.push({ pathname: '/store/product', params: { id: item.id } } as any)}
             >
-              <View style={[styles.productImageWrap, { backgroundColor: CARD_BG }]}>
+              <View style={styles.productImageWrap}>
                 <Image source={item.image} style={styles.productImage} resizeMode="contain" />
               </View>
               <Text style={[styles.productName, { color: theme.text }]} numberOfLines={1}>
@@ -149,20 +145,25 @@ const styles = StyleSheet.create({
     marginRight: 12,
     paddingBottom: 10,
   },
-  categoryImageWrap: { width: '100%', height: 80, padding: 10 },
+  categoryImageWrap: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: '#EDEDED',
+    borderRadius: 12,
+    padding: 10,
+  },
   categoryImage: { width: '100%', height: '100%' },
   categoryLabel: { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 4 },
   row: { justifyContent: 'space-between' },
-  productCard: { width: '48.5%', marginBottom: 18 },
+  productCard: { width: '48.5%', marginBottom: 18, borderRadius: 14, overflow: 'hidden', paddingBottom: 10 },
   productImageWrap: {
     width: '100%',
-    height: 130,
-    borderRadius: 14,
-    overflow: 'hidden',
-    padding: 10,
-    marginBottom: 8,
+    aspectRatio: 158 / 143,
+    backgroundColor: '#EDEDED',
+    borderRadius: 12,
+    padding: 14,
   },
   productImage: { width: '100%', height: '100%' },
-  productName: { fontSize: 13, fontWeight: '600' },
+  productName: { fontSize: 13, fontWeight: '600', marginTop: 8, marginHorizontal: 10 },
   empty: { textAlign: 'center', marginTop: 40, fontSize: 14 },
 });

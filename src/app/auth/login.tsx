@@ -109,7 +109,7 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
-      <PrimaryButton title="Login" onPress={() => router.push('/setup/details')} style={{ marginTop: 8, marginBottom: 16 }} />
+      <PrimaryButton title="Login" onPress={() => router.replace('/home')} style={{ marginTop: 8, marginBottom: 16 }} />
 
       <View style={styles.signupRow}>
         <Text style={{ color: isLight ? '#4A4A4A' : theme.textSecondary }}>New User? </Text>

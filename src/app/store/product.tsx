@@ -14,10 +14,6 @@ import {
     View,
 } from 'react-native';
 
-const CARD_BG = '#FFFFFF';
-const CARD_TEXT = '#1A1A1A';
-
-
 export default function ProductDetailScreen() {
   const { theme } = useTheme();
   const router = useRouter();
@@ -40,8 +36,7 @@ export default function ProductDetailScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {/* Image with floating back / favorite buttons */}
-        <View style={[styles.imageWrap, { backgroundColor: CARD_BG  } ]}>
+        <View style={styles.imageWrap}>
           <Image source={product.image} style={styles.image} resizeMode="contain" />
              <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} hitSlop={10}>
             <Ionicons name="chevron-back" size={24} color={theme.primary} />
@@ -59,7 +54,6 @@ export default function ProductDetailScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Info */}
         <View style={styles.infoSection}>
           <Text style={[styles.name, { color: theme.text }]}>{product.name}</Text>
           <Text style={[styles.price, { color: theme.primary }]}>
@@ -89,7 +83,12 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   notFound: { textAlign: 'center', marginTop: 80, fontSize: 16 },
   scroll: { paddingBottom: 40 },
-  imageWrap: { width: '100%', height: 300, padding: 24 },
+  imageWrap: {
+    width: '100%',
+    aspectRatio: 1.3,
+    backgroundColor: '#EDEDED',
+    padding: 24,
+  },
   image: { width: '100%', height: '100%' },
   backBtn: { position: 'absolute', top: 50, left: 16 },
   favBtn: { position: 'absolute', top: 50, right: 16 },

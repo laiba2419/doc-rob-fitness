@@ -13,9 +13,6 @@ import {
     View,
 } from 'react-native';
 
-const CARD_BG = '#FFFFFF';
-const CARD_TEXT = '#1A1A1A';
-
 export default function AllProductsScreen() {
   const { theme } = useTheme();
   const router = useRouter();
@@ -47,7 +44,7 @@ export default function AllProductsScreen() {
             style={styles.card}
             onPress={() => router.push({ pathname: '/store/product', params: { id: item.id } } as any)}
           >
-            <View style={[styles.imageWrap, { backgroundColor: CARD_BG }]}>
+            <View style={styles.imageWrap}>
               <Image source={item.image} style={styles.image} resizeMode="contain" />
             </View>
             <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
@@ -73,15 +70,14 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '700' },
   list: { paddingHorizontal: 20, paddingBottom: 40 },
   row: { justifyContent: 'space-between' },
-  card: { width: '48.5%', marginBottom: 18 },
+  card: { width: '48.5%', marginBottom: 18, borderRadius: 14, overflow: 'hidden', paddingBottom: 10 },
   imageWrap: {
     width: '100%',
-    height: 130,
-    borderRadius: 14,
-    overflow: 'hidden',
-    padding: 10,
-    marginBottom: 8,
+    aspectRatio: 158 / 143,
+    backgroundColor: '#EDEDED',
+    borderRadius: 12,
+    padding: 14,
   },
   image: { width: '100%', height: '100%' },
-  name: { fontSize: 13, fontWeight: '600' },
+  name: { fontSize: 13, fontWeight: '600', marginTop: 8, marginHorizontal: 10 },
 });

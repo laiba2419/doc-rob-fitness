@@ -32,7 +32,7 @@ export const products: Product[] = [
   { id: 'p2', categoryId: 'equipment', name: 'Jump Rope', price: 599, image: require('../../assets/images/products/jump-rope.png'), description: '...', rating: 4.6, reviews: 189 },
   { id: 'p3', categoryId: 'equipment', name: 'Kettlebells', price: 2499, image: require('../../assets/images/products/kettlebells.png'), description: '...', rating: 4.7, reviews: 312 },
   { id: 'p4', categoryId: 'equipment', name: 'Yoga Mat', price: 1299, image: require('../../assets/images/products/yoga-mat.png'), description: '...', rating: 4.7, reviews: 198 },
-  { id: 'p5', categoryId: 'equipment', name: 'Hand Gripper', price: 499, image: require('../../assets/images/products/hand gripper.png'), description: '...', rating: 4.5, reviews: 145 },
+  { id: 'p5', categoryId: 'equipment', name: 'Hand Gripper', price: 499, image: require('../../assets/images/products/hand-gripper.png'), description: '...', rating: 4.5, reviews: 145 },
 ];
 
 export function getCategoryById(id: string): Category | undefined {

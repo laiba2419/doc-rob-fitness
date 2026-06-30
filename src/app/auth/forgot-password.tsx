@@ -21,7 +21,7 @@ export default function ForgotPassword() {
 
       <InputField label="Email" placeholder="your_email@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" />
 
-      <PrimaryButton title="Continue" onPress={() => router.push('/auth/login')} />
+      <PrimaryButton title="Continue" onPress={() => router.push('/auth/verify-reset-otp')} />
     </View>
   );
 }

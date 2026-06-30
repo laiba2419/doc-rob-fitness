@@ -12,9 +12,6 @@ import {
     View,
 } from 'react-native';
 
-const CARD_BG = '#FFFFFF'; 
-const CARD_TEXT = '#1A1A1A';
-
 export default function CategoriesScreen() {
   const { theme } = useTheme();
   const router = useRouter();
@@ -33,13 +30,13 @@ export default function CategoriesScreen() {
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={[styles.card, { backgroundColor: CARD_BG }]}
+            style={styles.card}
             onPress={() => router.push({ pathname: '/store/category', params: { id: item.id } } as any)}
           >
             <View style={styles.imageWrap}>
               <Image source={item.image} style={styles.image} resizeMode="contain" />
             </View>
-            <Text style={[styles.label, { color: CARD_TEXT }]} numberOfLines={1}>
+            <Text style={[styles.label, { color: theme.text }]} numberOfLines={1}>
               {item.label}
             </Text>
           </TouchableOpacity>
@@ -61,7 +58,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     paddingBottom: 12,
   },
-  imageWrap: { width: '100%', height: 100, padding: 12 },
+  imageWrap: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: '#EDEDED',
+    borderRadius: 12,
+    padding: 14,
+  },
   image: { width: '100%', height: '100%' },
   label: { fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: 4 },
 });

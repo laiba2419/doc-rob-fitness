@@ -64,7 +64,7 @@ export default function InputHeightWeight() {
       weightUnit: weightUnit as 'kg' | 'lb',
     });
 
-    router.push('/auth/login');
+    router.replace('/home');
   };
 
   return (
