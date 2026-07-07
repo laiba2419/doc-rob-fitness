@@ -1,6 +1,7 @@
 import BackHeader from '@/components/BackHeader';
 import PrimaryButton from '@/components/PrimaryButton';
 import StepProgressBar from '@/components/StepProgressBar';
+import { useUserProfile } from '@/context/UserProfileContext';
 import { useTheme } from '@/theme/ThemeContext';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -9,7 +10,14 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 export default function InputGender() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { updateProfile } = useUserProfile();
   const [selected, setSelected] = useState<'male' | 'female' | null>(null);
+
+  const handleNext = async () => {
+    if (!selected) return;
+    await updateProfile({ gender: selected === 'male' ? 'Male' : 'Female' });
+    router.push('/setup/age');
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -75,7 +83,7 @@ export default function InputGender() {
       <PrimaryButton
         title="Next"
         disabled={!selected}
-        onPress={() => router.push('/setup/age')}
+        onPress={handleNext}
         style={{ marginTop: 'auto', marginBottom: 20 }}
       />
     </View>

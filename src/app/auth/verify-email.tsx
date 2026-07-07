@@ -6,10 +6,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 
-export default function VerifyResetOTP() {
+export default function VerifyEmailScreen() {
   const { theme } = useTheme();
   const router = useRouter();
-  const { verifyPasswordResetOtp, sendPasswordResetOtp } = useAuth();
+  const { verifySignupOtp, resendSignupOtp } = useAuth();
   const { email } = useLocalSearchParams<{ email: string }>();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -37,7 +37,7 @@ export default function VerifyResetOTP() {
     }
 
     setLoading(true);
-    const { error } = await verifyPasswordResetOtp(email, code);
+    const { error } = await verifySignupOtp(email, code);
     setLoading(false);
 
     if (error) {
@@ -45,25 +45,25 @@ export default function VerifyResetOTP() {
       return;
     }
 
-    router.push('/auth/reset-password');
+    router.replace('/setup/details');
   };
 
   const handleResend = async () => {
     if (!email) return;
-    const { error } = await sendPasswordResetOtp(email);
+    const { error } = await resendSignupOtp(email);
     if (error) {
       Alert.alert('Failed to Resend', error);
     } else {
-      Alert.alert('Code Sent', 'A new code has been sent to your email.');
+      Alert.alert('Code Sent', 'A new verification code has been sent to your email.');
     }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>OTP Verification</Text>
+      <Text style={[styles.title, { color: theme.text }]}>Verify Your Email</Text>
       <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-        OTP has been sent to your email, please enter the OTP to verify
+        A verification code has been sent to your email. Please enter it below.
       </Text>
 
       <View style={styles.otpRow}>

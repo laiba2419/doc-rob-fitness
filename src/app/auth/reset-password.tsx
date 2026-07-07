@@ -1,28 +1,47 @@
 import BackHeader from '@/components/BackHeader';
+import { useAuth } from '@/context/authcontext';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ResetPasswordScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { updatePassword, signOut } = useAuth();
 
   const [newPass, setNewPass] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (!newPass || !confirm) {
       Alert.alert('Missing Fields', 'Please fill in both password fields.');
+      return;
+    }
+    if (newPass.length < 6) {
+      Alert.alert('Weak Password', 'Password must be at least 6 characters.');
       return;
     }
     if (newPass !== confirm) {
       Alert.alert('Passwords Do Not Match', 'New password and confirmation must match.');
       return;
     }
+
+    setLoading(true);
+    const { error } = await updatePassword(newPass);
+    setLoading(false);
+
+    if (error) {
+      Alert.alert('Reset Failed', error);
+      return;
+    }
+
+    await signOut();
+
     Alert.alert('Password Reset', 'Your password has been reset successfully.', [
       { text: 'OK', onPress: () => router.replace('/auth/login') },
     ]);
@@ -64,9 +83,13 @@ export default function ResetPasswordScreen() {
       {renderField('New Password', newPass, setNewPass, showNew, setShowNew)}
       {renderField('Confirm New Password', confirm, setConfirm, showConfirm, setShowConfirm)}
 
-      <TouchableOpacity style={[styles.updateBtn, { backgroundColor: theme.primary }]} onPress={handleReset}>
-        <Text style={styles.updateBtnText}>Reset Password</Text>
-      </TouchableOpacity>
+      {loading ? (
+        <ActivityIndicator color={theme.primary} style={{ marginTop: 8 }} />
+      ) : (
+        <TouchableOpacity style={[styles.updateBtn, { backgroundColor: theme.primary }]} onPress={handleReset}>
+          <Text style={styles.updateBtnText}>Reset Password</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

@@ -1,16 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '@/lib/supabase';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 const STORAGE_KEY = '@user_profile';
 
 export type UserProfile = {
-  // existing fields
   age: number | null;
   height: number | null;
   heightUnit: 'cm' | 'ft';
   weight: number | null;
   weightUnit: 'kg' | 'lb';
-  // new fields for Edit Profile
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -37,10 +36,38 @@ type UserProfileContextType = {
   profile: UserProfile;
   isLoaded: boolean;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
-  setProfile: (profile: UserProfile) => void; // for EditProfileScreen direct save
+  setProfile: (profile: UserProfile) => void;
 };
 
 const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
+
+// Supabase profiles table ko update/insert karne wala helper
+async function syncProfileToSupabase(profile: UserProfile) {
+  try {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
+      console.warn('Supabase sync skipped: user not logged in');
+      return;
+    }
+
+    const { error } = await supabase.from('profiles').upsert({
+      id: userData.user.id,
+      full_name: `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim(),
+      gender: profile.gender ?? null,
+      age: profile.age,
+      height: profile.height,
+      weight: profile.weight,
+      mobile: profile.mobile ?? null,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.warn('Failed to sync profile to Supabase:', error.message);
+    }
+  } catch (err) {
+    console.warn('Supabase sync error:', err);
+  }
+}
 
 export function UserProfileProvider({ children }: { children: ReactNode }) {
   const [profile, setProfileState] = useState<UserProfile>(defaultProfile);
@@ -69,6 +96,8 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.warn('Failed to save user profile to storage', error);
     }
+    // Local save ke sath sath Supabase me bhi save karo
+    await syncProfileToSupabase(next);
   };
 
   const setProfile = async (next: UserProfile) => {
@@ -78,6 +107,7 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.warn('Failed to save user profile to storage', error);
     }
+    await syncProfileToSupabase(next);
   };
 
   return (
