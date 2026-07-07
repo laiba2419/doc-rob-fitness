@@ -1,18 +1,39 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../theme/ThemeContext';
+import { useAuth } from '@/context/authcontext';
 import InputField from '../../components/InputField';
 import PrimaryButton from '../../components/PrimaryButton';
 
 export default function LoginScreen() {
   const { theme, activeMode } = useTheme();
   const router = useRouter();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
+  const [loading, setLoading] = useState(false);
   const isLight = activeMode === 'light';
+
+  const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert('Missing Fields', 'Please enter both email and password.');
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await signIn(email.trim(), password);
+    setLoading(false);
+
+    if (error) {
+      Alert.alert('Login Failed', error);
+      return;
+    }
+
+    router.replace('/home');
+  };
 
   return (
     <ScrollView style={{ backgroundColor: theme.background }} contentContainerStyle={styles.container}>
@@ -96,6 +117,7 @@ export default function LoginScreen() {
             styles.socialBtn,
             { backgroundColor: isLight ? theme.text : theme.surface, borderColor: theme.border },
           ]}
+          onPress={() => Alert.alert('Coming Soon', 'Google sign-in will be added shortly.')}
         >
           <Ionicons name="logo-google" size={20} color={isLight ? '#FFFFFF' : theme.text} />
         </TouchableOpacity>
@@ -109,11 +131,15 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
-      <PrimaryButton title="Login" onPress={() => router.replace('/home')} style={{ marginTop: 8, marginBottom: 16 }} />
+      {loading ? (
+        <ActivityIndicator color={theme.primary} style={{ marginTop: 8, marginBottom: 16 }} />
+      ) : (
+        <PrimaryButton title="Login" onPress={handleLogin} style={{ marginTop: 8, marginBottom: 16 }} />
+      )}
 
       <View style={styles.signupRow}>
         <Text style={{ color: isLight ? '#4A4A4A' : theme.textSecondary }}>New User? </Text>
-        <TouchableOpacity onPress={() => router.push('/setup/details')}>
+        <TouchableOpacity onPress={() => router.push('/auth/signup')}>
           <Text style={{ color: theme.primary, fontWeight: '600' }}>Register Now</Text>
         </TouchableOpacity>
       </View>

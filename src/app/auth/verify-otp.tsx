@@ -1,14 +1,18 @@
 import BackHeader from '@/components/BackHeader';
 import PrimaryButton from '@/components/PrimaryButton';
+import { useAuth } from '@/context/authcontext';
 import { useTheme } from '@/theme/ThemeContext';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function VerifyOTP() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { verifyPhoneOtp, sendPhoneOtp } = useAuth();
+  const { phone } = useLocalSearchParams<{ phone: string }>();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [loading, setLoading] = useState(false);
   const inputsRef = useRef<Array<TextInput | null>>([]);
 
   const handleChange = (text: string, index: number) => {
@@ -18,6 +22,39 @@ export default function VerifyOTP() {
 
     if (text && index < 5) {
       inputsRef.current[index + 1]?.focus();
+    }
+  };
+
+  const handleVerify = async () => {
+    const code = otp.join('');
+    if (code.length < 6) {
+      Alert.alert('Incomplete Code', 'Please enter the full 6 digit code.');
+      return;
+    }
+    if (!phone) {
+      Alert.alert('Error', 'Phone number missing, please go back and try again.');
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await verifyPhoneOtp(phone, code);
+    setLoading(false);
+
+    if (error) {
+      Alert.alert('Verification Failed', error);
+      return;
+    }
+
+    router.push('/home');
+  };
+
+  const handleResend = async () => {
+    if (!phone) return;
+    const { error } = await sendPhoneOtp(phone);
+    if (error) {
+      Alert.alert('Failed to Resend', error);
+    } else {
+      Alert.alert('Code Sent', 'A new code has been sent to your phone.');
     }
   };
 
@@ -43,7 +80,15 @@ export default function VerifyOTP() {
         ))}
       </View>
 
-      <PrimaryButton title="Verify & Proceed" onPress={() => router.push('/home')} />
+      {loading ? (
+        <ActivityIndicator color={theme.primary} style={{ marginBottom: 16 }} />
+      ) : (
+        <PrimaryButton title="Verify & Proceed" onPress={handleVerify} />
+      )}
+
+      <Text style={{ color: theme.primary, textAlign: 'center', marginTop: 16, fontWeight: '600' }} onPress={handleResend}>
+        Resend Code
+      </Text>
     </View>
   );
 }

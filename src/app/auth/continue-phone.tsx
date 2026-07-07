@@ -1,15 +1,36 @@
 import BackHeader from '@/components/BackHeader';
 import InputField from '@/components/InputField';
 import PrimaryButton from '@/components/PrimaryButton';
+import { useAuth } from '@/context/authcontext';
 import { useTheme } from '@/theme/ThemeContext';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
 export default function ContinuePhone() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { sendPhoneOtp } = useAuth();
   const [phone, setPhone] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleContinue = async () => {
+    if (!phone.trim()) {
+      Alert.alert('Missing Field', 'Please enter your phone number.');
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await sendPhoneOtp(phone.trim());
+    setLoading(false);
+
+    if (error) {
+      Alert.alert('Failed to Send Code', error);
+      return;
+    }
+
+    router.push({ pathname: '/auth/verify-otp', params: { phone: phone.trim() } });
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -21,7 +42,11 @@ export default function ContinuePhone() {
 
       <InputField label="Phone Number" placeholder="+92 300 1234567" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
 
-      <PrimaryButton title="Continue" onPress={() => router.push('/auth/verify-otp')} />
+      {loading ? (
+        <ActivityIndicator color={theme.primary} style={{ marginTop: 8 }} />
+      ) : (
+        <PrimaryButton title="Continue" onPress={handleContinue} />
+      )}
     </View>
   );
 }
