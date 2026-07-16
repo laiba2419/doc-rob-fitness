@@ -6,6 +6,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { ThemeType } from '@/theme/colors';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 function UnitToggle({
@@ -46,6 +47,7 @@ function toKg(value: number, unit: string): number {
 
 export default function InputHeightWeight() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { updateProfile } = useUserProfile();
   const [height, setHeight] = useState('165');
@@ -72,21 +74,21 @@ export default function InputHeightWeight() {
       <BackHeader />
       <StepProgressBar totalSteps={4} currentStep={4} />
 
-      <Text style={[styles.title, { color: theme.text }]}>Let us know the rest</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('onboarding.heightWeightTitle')}</Text>
 
-      <Text style={[styles.label, { color: theme.textSecondary }]}>Height</Text>
+      <Text style={[styles.label, { color: theme.textSecondary }]}>{t('profile.editProfile.height')}</Text>
       <View style={[styles.row, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
         <TextInput style={[styles.input, { color: theme.text }]} value={height} onChangeText={setHeight} keyboardType="numeric" />
         <UnitToggle options={['cm', 'ft']} selected={heightUnit} onSelect={setHeightUnit} theme={theme} />
       </View>
 
-      <Text style={[styles.label, { color: theme.textSecondary }]}>Weight</Text>
+      <Text style={[styles.label, { color: theme.textSecondary }]}>{t('profile.editProfile.weight')}</Text>
       <View style={[styles.row, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
         <TextInput style={[styles.input, { color: theme.text }]} value={weight} onChangeText={setWeight} keyboardType="numeric" />
         <UnitToggle options={['kg', 'lb']} selected={weightUnit} onSelect={setWeightUnit} theme={theme} />
       </View>
 
-      <PrimaryButton title="Done" onPress={handleDone} style={{ marginTop: 'auto', marginBottom: 20 }} />
+      <PrimaryButton title={t('onboarding.done')} onPress={handleDone} style={{ marginTop: 'auto', marginBottom: 20 }} />
     </View>
   );
 }

@@ -1,21 +1,36 @@
 import BackHeader from '@/components/BackHeader';
 import LineChart from '@/components/LineChart';
-import { formatDate, weightEntries } from '@/data/report';
+import { fetchWeightEntries, formatDate, WeightEntry } from '@/services/reportservice';
 import { bmiCategory, calculateBMI } from '@/data/userProfile';
 import { useUserProfile } from '@/context/UserProfileContext';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dimensions, FlatList, StyleSheet, Text, View } from 'react-native';
 
 const SCREEN_W = Dimensions.get('window').width;
 
 export default function BMIDetailScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { profile } = useUserProfile();
   const heightCm = profile.height;
+  const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([]);
 
-  // BMI history is derived from weight entries + the saved height, since
-  // there's no separate BMI log — every weight entry becomes a BMI point.
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+      fetchWeightEntries().then((data) => {
+        if (isActive) setWeightEntries(data);
+      });
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
+
   const bmiEntries = heightCm
     ? [...weightEntries]
         .sort((a, b) => a.date.localeCompare(b.date))
@@ -32,46 +47,43 @@ export default function BMIDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>BMI</Text>
+      <View style={{ paddingHorizontal: 20 }}>
+        <BackHeader />
+      </View>
+      <Text style={[styles.title, { color: theme.text }]}>{t('report.bmiTitle')}</Text>
 
       {!heightCm ? (
-        // No height saved yet — nothing to calculate, so guide the user
-        // instead of showing an empty/broken chart.
         <View style={[styles.emptyCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Ionicons name="body-outline" size={32} color={theme.textSecondary} />
-          <Text style={[styles.emptyTitle, { color: theme.text }]}>Height not set</Text>
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>{t('report.heightNotSetTitle')}</Text>
           <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-            Add your height in setup to calculate your BMI.
+            {t('report.heightNotSetMsg')}
           </Text>
         </View>
       ) : (
         <>
-          {/* Current BMI summary */}
           <View style={[styles.summaryCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <Text style={[styles.summaryValue, { color: theme.text }]}>
               {currentBMI != null ? currentBMI.toFixed(1) : '—'}
             </Text>
             <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>
-              {currentBMI != null ? bmiCategory(currentBMI) : '—'} · Height {heightCm} cm
+              {currentBMI != null ? bmiCategory(currentBMI) : '—'} · {t('report.heightLabel', { height: heightCm })}
             </Text>
           </View>
 
-          {/* Chart */}
           <View style={[styles.chartCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <Text style={[styles.chartLabel, { color: theme.textSecondary }]}>
-              Last {chartData.length} entries
+              {t('report.lastDays', { count: chartData.length })}
             </Text>
             <LineChart data={chartData} width={SCREEN_W - 72} height={150} showLabels />
           </View>
 
-          {/* History list */}
           <FlatList
             data={sorted}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
-            ListHeaderComponent={<Text style={[styles.sectionTitle, { color: theme.text }]}>All Entries</Text>}
+            ListHeaderComponent={<Text style={[styles.sectionTitle, { color: theme.text }]}>{t('report.allEntries')}</Text>}
             renderItem={({ item }) => (
               <View style={[styles.entryRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <View>
@@ -93,7 +105,6 @@ export default function BMIDetailScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   title: { fontSize: 20, fontWeight: '700', marginHorizontal: 20, marginBottom: 12 },
-
   emptyCard: {
     marginHorizontal: 20,
     borderRadius: 16,
@@ -104,7 +115,6 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontSize: 15, fontWeight: '700', marginTop: 4 },
   emptyText: { fontSize: 13, textAlign: 'center' },
-
   summaryCard: {
     marginHorizontal: 20,
     borderRadius: 16,
@@ -115,10 +125,8 @@ const styles = StyleSheet.create({
   },
   summaryValue: { fontSize: 32, fontWeight: '800' },
   summaryLabel: { fontSize: 13, marginTop: 4 },
-
   chartCard: { marginHorizontal: 20, borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16 },
   chartLabel: { fontSize: 12, marginBottom: 8 },
-
   list: { paddingHorizontal: 20, paddingBottom: 40 },
   sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 10 },
   entryRow: {

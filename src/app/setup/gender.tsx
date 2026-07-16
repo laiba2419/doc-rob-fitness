@@ -5,16 +5,20 @@ import { useUserProfile } from '@/context/UserProfileContext';
 import { useTheme } from '@/theme/ThemeContext';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function InputGender() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { updateProfile } = useUserProfile();
   const [selected, setSelected] = useState<'male' | 'female' | null>(null);
 
   const handleNext = async () => {
     if (!selected) return;
+    // Note: yahan value ab bhi English ("Male"/"Female") store ho rahi hai
+    // taake database consistent rahe -- sirf label translate hota hai UI mein.
     await updateProfile({ gender: selected === 'male' ? 'Male' : 'Female' });
     router.push('/setup/age');
   };
@@ -23,7 +27,7 @@ export default function InputGender() {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
       <StepProgressBar totalSteps={4} currentStep={2} />
-      <Text style={[styles.title, { color: theme.text }]}>What's Your Gender?</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('onboarding.genderTitle')}</Text>
 
       <View style={styles.row}>
         {(['male', 'female'] as const).map((gender) => {
@@ -33,6 +37,7 @@ export default function InputGender() {
             gender === 'male'
               ? require('../../../assets/images/male.png')
               : require('../../../assets/images/female.png');
+          const label = gender === 'male' ? t('profile.editProfile.male') : t('profile.editProfile.female');
 
           return (
             <TouchableOpacity
@@ -41,7 +46,6 @@ export default function InputGender() {
               onPress={() => setSelected(gender)}
               activeOpacity={0.85}
             >
-              {/* Card background */}
               <View
                 style={[
                   styles.card,
@@ -53,7 +57,6 @@ export default function InputGender() {
                 ]}
               />
 
-              {/* Image — grayscale jab doosra select ho, koi opacity drop nahi */}
               <Image
                 source={imgSource}
                 style={[
@@ -73,7 +76,7 @@ export default function InputGender() {
                   },
                 ]}
               >
-                {gender === 'male' ? 'Male' : 'Female'}
+                {label}
               </Text>
             </TouchableOpacity>
           );
@@ -81,7 +84,7 @@ export default function InputGender() {
       </View>
 
       <PrimaryButton
-        title="Next"
+        title={t('onboarding.next')}
         disabled={!selected}
         onPress={handleNext}
         style={{ marginTop: 'auto', marginBottom: 20 }}
@@ -95,29 +98,10 @@ const IMG_HEIGHT = 310;
 const WRAPPER_HEIGHT = IMG_HEIGHT + 40;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    paddingTop: 60,
-  },
-
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 24,
-  },
-
-  row: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-
-  cardWrapper: {
-    flex: 1,
-    height: WRAPPER_HEIGHT,
-    alignItems: 'center',
-  },
-
+  container: { flex: 1, padding: 24, paddingTop: 60 },
+  title: { fontSize: 20, fontWeight: '700', marginBottom: 24 },
+  row: { flexDirection: 'row', gap: 16 },
+  cardWrapper: { flex: 1, height: WRAPPER_HEIGHT, alignItems: 'center' },
   card: {
     position: 'absolute',
     top: (WRAPPER_HEIGHT - CARD_HEIGHT) / 2 - 10,
@@ -126,19 +110,6 @@ const styles = StyleSheet.create({
     height: CARD_HEIGHT,
     borderRadius: 16,
   },
-
-  image: {
-    position: 'absolute',
-    top: 0,
-    width: '170%',
-    height: 320,
-    zIndex: 2,
-  },
-
-  label: {
-    position: 'absolute',
-    bottom: 6,
-    fontSize: 15,
-    zIndex: 3,
-  },
+  image: { position: 'absolute', top: 0, width: '170%', height: 320, zIndex: 2 },
+  label: { position: 'absolute', bottom: 6, fontSize: 15, zIndex: 3 },
 });

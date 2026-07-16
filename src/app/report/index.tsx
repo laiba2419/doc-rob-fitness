@@ -1,17 +1,21 @@
 import BottomNav from '@/components/BottomNav';
 import LineChart from '@/components/LineChart';
 import {
+  fetchStepsEntries,
+  fetchWeightEntries,
   formatDate,
-  latestSteps,
-  latestWeight,
-  stepsEntries,
-  weightEntries,
-} from '@/data/report';
+  latestValue,
+  StepsEntry,
+  WeightEntry,
+} from '@/services/reportservice';
 import { bmiCategory, calculateBMI } from '@/data/userProfile';
 import { useUserProfile } from '@/context/UserProfileContext';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -21,21 +25,37 @@ const RING_STROKE = 7;
 
 export default function ReportHomeScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { profile } = useUserProfile();
 
-  const currentWeight = latestWeight(weightEntries);
-  const currentSteps = latestSteps(stepsEntries);
+  const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([]);
+  const [stepsEntries, setStepsEntries] = useState<StepsEntry[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+      (async () => {
+        const [w, s] = await Promise.all([fetchWeightEntries(), fetchStepsEntries()]);
+        if (isActive) {
+          setWeightEntries(w);
+          setStepsEntries(s);
+        }
+      })();
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
+
+  const currentWeight = latestValue(weightEntries);
+  const currentSteps = latestValue(stepsEntries);
 
   const weightData = weightEntries.slice(-7).map((e) => ({ label: formatDate(e.date), value: e.value }));
 
-  // Height comes straight from UserProfileContext (saved during onboarding's
-  // height/weight setup screen) — no manual fetch needed, context handles it.
   const heightCm = profile.height;
   const bmi = heightCm != null && currentWeight != null ? calculateBMI(currentWeight, heightCm) : null;
 
-  // Ring progress: BMI's healthy display range is roughly 10–40 for a
-  // full ring sweep. This is just a visual fill, not a medical scale.
   const BMI_MIN = 10;
   const BMI_MAX = 40;
   const ringProgress = bmi != null ? Math.min(Math.max((bmi - BMI_MIN) / (BMI_MAX - BMI_MIN), 0), 1) : 0;
@@ -46,12 +66,10 @@ export default function ReportHomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.headerTitle, { color: theme.text }]}>Report</Text>
+      <Text style={[styles.headerTitle, { color: theme.text }]}>{t('tabs.report')}</Text>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {/* Summary Cards: Steps + BMI ring — matches Figma's Report_Light */}
         <View style={styles.cardsRow}>
-          {/* Steps Card */}
           <TouchableOpacity
             style={[styles.summaryCard, { backgroundColor: theme.card, borderColor: theme.border }]}
             onPress={() => router.push('/report/steps' as any)}
@@ -62,11 +80,9 @@ export default function ReportHomeScreen() {
             <Text style={[styles.cardValue, { color: theme.text }]}>
               {currentSteps?.toLocaleString() ?? '—'}
             </Text>
-            <Text style={[styles.cardLabel, { color: theme.textSecondary }]}>Total Steps</Text>
+            <Text style={[styles.cardLabel, { color: theme.textSecondary }]}>{t('report.totalSteps')}</Text>
           </TouchableOpacity>
 
-          {/* BMI Card — circular progress ring with the value centered,
-              like the "399 Kcal" ring in the Figma design (here it's BMI). */}
           <TouchableOpacity
             style={[styles.summaryCard, styles.bmiCard, { backgroundColor: theme.card, borderColor: theme.border }]}
             onPress={() => router.push('/report/bmi' as any)}
@@ -102,25 +118,23 @@ export default function ReportHomeScreen() {
               </View>
             </View>
             <Text style={[styles.cardLabel, { color: theme.textSecondary }]}>
-              {bmi != null ? `BMI · ${bmiCategory(bmi)}` : 'Add your height for BMI'}
+              {bmi != null ? `${t('report.bmiTitle')} · ${bmiCategory(bmi)}` : t('report.addHeightForBmi')}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Weight Section — only graph on Home, matches Figma exactly */}
         <TouchableOpacity
           style={[styles.graphCard, { backgroundColor: theme.card, borderColor: theme.border }]}
           onPress={() => router.push('/report/weight' as any)}
         >
           <View style={styles.graphCardHeader}>
-            <Text style={[styles.graphTitle, { color: theme.text }]}>Weight</Text>
+            <Text style={[styles.graphTitle, { color: theme.text }]}>{t('report.weightTitle')}</Text>
             <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
           </View>
           <LineChart data={weightData} width={SCREEN_W - 72} height={150} showLabels />
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Floating add button — matches the "+" FAB on the Figma Report screen */}
       <TouchableOpacity
         style={[styles.fab, { backgroundColor: theme.primary }]}
         onPress={() => router.push('/report/add-weight' as any)}
@@ -137,7 +151,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   headerTitle: { fontSize: 22, fontWeight: '700', marginHorizontal: 20, paddingTop: 56, marginBottom: 16 },
   scroll: { paddingHorizontal: 20, paddingBottom: 120 },
-
   cardsRow: { flexDirection: 'row', gap: 12, marginBottom: 14 },
   summaryCard: {
     flex: 1,
@@ -148,7 +161,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   bmiCard: { alignItems: 'center' },
-
   iconCircle: {
     width: 38,
     height: 38,
@@ -158,7 +170,6 @@ const styles = StyleSheet.create({
   },
   cardValue: { fontSize: 22, fontWeight: '800' },
   cardLabel: { fontSize: 12, fontWeight: '500' },
-
   bmiRingWrap: {
     width: RING_SIZE,
     height: RING_SIZE,
@@ -171,7 +182,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bmiValue: { fontSize: 18, fontWeight: '800' },
-
   graphCard: {
     borderRadius: 16,
     borderWidth: 1,
@@ -185,7 +195,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   graphTitle: { fontSize: 16, fontWeight: '700' },
-
   fab: {
     position: 'absolute',
     bottom: 90,

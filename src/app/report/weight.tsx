@@ -1,19 +1,34 @@
 import BackHeader from '@/components/BackHeader';
 import BottomNav from '@/components/BottomNav';
 import LineChart from '@/components/LineChart';
-import { formatDate, weightEntries as initialEntries, WeightEntry } from '@/data/report';
+import { fetchWeightEntries, formatDate, WeightEntry } from '@/services/reportservice';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const SCREEN_W = Dimensions.get('window').width;
 
 export default function WeightDetailScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
-  const [entries, setEntries] = useState<WeightEntry[]>(initialEntries);
+  const [entries, setEntries] = useState<WeightEntry[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+      fetchWeightEntries().then((data) => {
+        if (isActive) setEntries(data);
+      });
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   const chartData = [...entries]
     .sort((a, b) => a.date.localeCompare(b.date))
@@ -25,33 +40,34 @@ export default function WeightDetailScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>Weight</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('report.weightTitle')}</Text>
 
-      {/* Chart */}
       <View style={[styles.chartCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <Text style={[styles.chartLabel, { color: theme.textSecondary }]}>Last {chartData.length} entries (kg)</Text>
+        <Text style={[styles.chartLabel, { color: theme.textSecondary }]}>
+          {t('report.lastEntriesKg', { count: chartData.length })}
+        </Text>
         <LineChart data={chartData} width={SCREEN_W - 72} height={150} showLabels />
       </View>
 
-      {/* Entries List */}
       <FlatList
         data={sorted}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
-        ListHeaderComponent={<Text style={[styles.sectionTitle, { color: theme.text }]}>All Entries</Text>}
+        ListHeaderComponent={<Text style={[styles.sectionTitle, { color: theme.text }]}>{t('report.allEntries')}</Text>}
         renderItem={({ item }) => (
           <View style={[styles.entryRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <View>
               <Text style={[styles.entryDate, { color: theme.textSecondary }]}>{formatDate(item.date)}</Text>
-              <Text style={[styles.entryValue, { color: theme.text }]}>{item.value} kg</Text>
+              <Text style={[styles.entryValue, { color: theme.text }]}>
+                {item.value} {t('report.kgUnit')}
+              </Text>
             </View>
             <Ionicons name="scale-outline" size={20} color={theme.primary} />
           </View>
         )}
       />
 
-      {/* FAB */}
       <TouchableOpacity
         style={[styles.fab, { backgroundColor: theme.primary }]}
         onPress={() => router.push('/report/add-weight' as any)}

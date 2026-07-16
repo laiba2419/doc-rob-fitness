@@ -3,17 +3,29 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../theme/ThemeContext';
+import { useAuth } from '../context/authcontext';
 
 export default function SplashScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { session, loading } = useAuth();
 
   useEffect(() => {
+    // Jab tak Supabase session load ho raha hai, wait karo — koi decision mat lo
+    if (loading) return;
+
     const timer = setTimeout(() => {
-      router.replace('/onboarding/screen');
+      if (session) {
+        // Session mil gaya (user pehle se login hai) → seedha Home pe bhejo
+        router.replace('/home');
+      } else {
+        // Koi session nahi → login/onboarding pe bhejo
+        router.replace('/onboarding/screen');
+      }
     }, 1800);
+
     return () => clearTimeout(timer);
-  }, []);
+  }, [loading, session]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>

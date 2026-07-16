@@ -1,10 +1,12 @@
 import BackHeader from '@/components/BackHeader';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function AboutUsScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
@@ -13,27 +15,25 @@ export default function AboutUsScreen() {
         <View style={[styles.logoWrap, { backgroundColor: theme.primary }]}>
           <Ionicons name="fitness" size={42} color="#FFFFFF" />
         </View>
-        <Text style={[styles.appName, { color: theme.text }]}>GetFit</Text>
-        <Text style={[styles.version, { color: theme.textSecondary }]}>Version 1.0.0</Text>
+        <Text style={[styles.appName, { color: theme.text }]}>{t('profile.aboutUs.appName')}</Text>
+        <Text style={[styles.version, { color: theme.textSecondary }]}>{t('profile.aboutUs.version')}</Text>
 
         <Text style={[styles.description, { color: theme.textSecondary }]}>
-          GetFit is your all-in-one fitness companion — built to help you train smarter, eat better, and
-          stay consistent. From personalized workout plans to nutrition tracking and daily reminders, GetFit
-          keeps you motivated every step of the way.
+          {t('profile.aboutUs.description')}
         </Text>
 
         <View style={[styles.contactCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <View style={styles.contactRow}>
             <Ionicons name="mail-outline" size={18} color={theme.primary} />
-            <Text style={[styles.contactText, { color: theme.text }]}>support@getfitapp.com</Text>
+            <Text style={[styles.contactText, { color: theme.text }]}>{t('profile.aboutUs.email')}</Text>
           </View>
           <View style={[styles.contactRow, { borderTopWidth: 1, borderTopColor: theme.border, paddingTop: 12, marginTop: 12 }]}>
             <Ionicons name="globe-outline" size={18} color={theme.primary} />
-            <Text style={[styles.contactText, { color: theme.text }]}>www.getfitapp.com</Text>
+            <Text style={[styles.contactText, { color: theme.text }]}>{t('profile.aboutUs.website')}</Text>
           </View>
         </View>
 
-        <Text style={[styles.copyright, { color: theme.textSecondary }]}>© 2026 GetFit. All rights reserved.</Text>
+        <Text style={[styles.copyright, { color: theme.textSecondary }]}>{t('profile.aboutUs.copyright')}</Text>
       </ScrollView>
     </View>
   );

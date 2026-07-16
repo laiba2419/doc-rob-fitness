@@ -1,30 +1,30 @@
 import BackHeader from '@/components/BackHeader';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type ThemeOption = {
   id: 'light' | 'dark' | 'system';
-  label: string;
-  description: string;
   icon: keyof typeof Ionicons.glyphMap;
 };
 
 const options: ThemeOption[] = [
-  { id: 'light', label: 'Light', description: 'Bright background, dark text', icon: 'sunny-outline' },
-  { id: 'dark', label: 'Dark', description: 'Dark background, easy on the eyes', icon: 'moon-outline' },
-  { id: 'system', label: 'System', description: 'Match your device settings', icon: 'phone-portrait-outline' },
+  { id: 'light', icon: 'sunny-outline' },
+  { id: 'dark', icon: 'moon-outline' },
+  { id: 'system', icon: 'phone-portrait-outline' },
 ];
 
 export default function AppThemeScreen() {
   const { theme, themePreference, setThemePreference, activeMode } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>App Theme</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('profile.appTheme.title')}</Text>
       <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-        Choose how GetFit looks. Currently using {activeMode === 'dark' ? 'Dark' : 'Light'} mode.
+        {t('profile.appTheme.subtitle', { mode: activeMode === 'dark' ? t('profile.appTheme.dark') : t('profile.appTheme.light') })}
       </Text>
 
       <View style={{ gap: 12 }}>
@@ -44,8 +44,8 @@ export default function AppThemeScreen() {
                 <Ionicons name={opt.icon} size={20} color={theme.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.label, { color: theme.text }]}>{opt.label}</Text>
-                <Text style={[styles.desc, { color: theme.textSecondary }]}>{opt.description}</Text>
+                <Text style={[styles.label, { color: theme.text }]}>{t(`profile.appTheme.options.${opt.id}.label`)}</Text>
+                <Text style={[styles.desc, { color: theme.textSecondary }]}>{t(`profile.appTheme.options.${opt.id}.description`)}</Text>
               </View>
               <Ionicons
                 name={active ? 'checkmark-circle' : 'ellipse-outline'}

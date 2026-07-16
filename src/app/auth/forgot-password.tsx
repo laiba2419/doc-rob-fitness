@@ -4,19 +4,53 @@ import PrimaryButton from '@/components/PrimaryButton';
 import { useAuth } from '@/context/authcontext';
 import { useTheme } from '@/theme/ThemeContext';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function ForgotPassword() {
   const { theme } = useTheme();
   const router = useRouter();
-  const { sendPasswordResetOtp, testRawPasswordReset } = useAuth();
+  const { t } = useTranslation();
+  const { sendPasswordResetOtp } = useAuth();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  const startCooldown = () => {
+    setCooldown(RESEND_COOLDOWN_SECONDS);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const handleContinue = async () => {
     if (!email.trim()) {
-      Alert.alert('Missing Field', 'Please enter your email address.');
+      Alert.alert(t('auth.common.missingFieldsTitle'), t('auth.forgotPassword.missingFieldMsg'));
+      return;
+    }
+
+    if (cooldown > 0) {
+      Alert.alert(
+        'Please wait',
+        `A code was already sent. You can request another one in ${cooldown} seconds.`
+      );
       return;
     }
 
@@ -25,35 +59,51 @@ export default function ForgotPassword() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Failed to Send Code', error);
+      Alert.alert(t('auth.forgotPassword.failedToSendTitle'), error);
       return;
     }
 
-    router.push({ pathname: '/auth/verify-reset-otp', params: { email: email.trim() } });
+    startCooldown();
+
+    // Friendly heads-up: email delivery can take a few minutes, especially
+    // for the first message a provider like Gmail sees from our domain.
+    Alert.alert(
+      'Code Sent',
+      "We've sent a code to your email. It usually arrives within a minute, but it can take a few minutes — please check your inbox (and spam folder) before requesting a new one.",
+      [
+        {
+          text: 'OK',
+          onPress: () => router.push({ pathname: '/auth/verify-reset-otp', params: { email: email.trim() } }),
+        },
+      ]
+    );
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>Forgot password</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('auth.forgotPassword.title')}</Text>
       <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-        Please enter your email address to request a password reset
+        {t('auth.forgotPassword.subtitle')}
       </Text>
 
-      <InputField label="Email" placeholder="your_email@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" />
+      <InputField
+        label={t('auth.common.emailLabel')}
+        placeholder={t('auth.common.emailPlaceholder')}
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+      />
 
       {loading ? (
         <ActivityIndicator color={theme.primary} style={{ marginTop: 8 }} />
       ) : (
-        <PrimaryButton title="Continue" onPress={handleContinue} />
+        <PrimaryButton
+          title={cooldown > 0 ? `${t('auth.common.continue')} (${cooldown}s)` : t('auth.common.continue')}
+          onPress={handleContinue}
+          disabled={cooldown > 0}
+        />
       )}
-
-      {/* TEMPORARY DEBUG BUTTON — remove after diagnosing the reset-password 500 error */}
-      <PrimaryButton
-        title="TEST Raw Reset"
-        onPress={() => testRawPasswordReset(email.trim())}
-        style={{ marginTop: 12 }}
-      />
     </View>
   );
 }

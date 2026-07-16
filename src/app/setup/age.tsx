@@ -5,6 +5,7 @@ import { useUserProfile } from '@/context/UserProfileContext';
 import { useTheme } from '@/theme/ThemeContext';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FlatList, NativeScrollEvent, NativeSyntheticEvent, StyleSheet, Text, View } from 'react-native';
 
 const ITEM_HEIGHT = 50;
@@ -12,6 +13,7 @@ const AGES = Array.from({ length: 80 }, (_, i) => i + 10);
 
 export default function InputAge() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { updateProfile } = useUserProfile();
   const [selectedAge, setSelectedAge] = useState(36);
@@ -33,7 +35,7 @@ export default function InputAge() {
       <BackHeader />
       <StepProgressBar totalSteps={4} currentStep={3} />
 
-      <Text style={[styles.title, { color: theme.text }]}>How old are you?</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('onboarding.ageTitle')}</Text>
 
       <View style={styles.pickerWrap}>
         <View style={[styles.highlightLine, { borderColor: theme.primary, top: ITEM_HEIGHT * 2 }]} />
@@ -59,7 +61,7 @@ export default function InputAge() {
         />
       </View>
 
-      <PrimaryButton title="Next" onPress={handleNext} />
+      <PrimaryButton title={t('onboarding.next')} onPress={handleNext} />
     </View>
   );
 }

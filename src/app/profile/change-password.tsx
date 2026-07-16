@@ -1,31 +1,50 @@
 import BackHeader from '@/components/BackHeader';
+import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ChangePasswordScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
 
-  const [current, setCurrent] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleUpdate = () => {
-    if (!current || !newPass || !confirm) {
-      Alert.alert('Missing Fields', 'Please fill in all password fields.');
+  const handleUpdate = async () => {
+    if (!newPass || !confirm) {
+      Alert.alert(t('profile.changePassword.missingFieldsTitle'), t('profile.changePassword.missingFieldsMessage'));
       return;
     }
     if (newPass !== confirm) {
-      Alert.alert('Passwords Do Not Match', 'New password and confirmation must match.');
+      Alert.alert(t('profile.changePassword.mismatchTitle'), t('profile.changePassword.mismatchMessage'));
       return;
     }
-    Alert.alert('Password Updated', 'Your password has been changed successfully.', [
+    if (newPass.length < 6) {
+      Alert.alert(t('profile.changePassword.missingFieldsTitle'), t('profile.changePassword.weakPasswordMessage'));
+      return;
+    }
+
+    setLoading(true);
+
+    // User already has an active session (logged in) — no need to re-verify old password
+    const { error } = await supabase.auth.updateUser({ password: newPass });
+
+    setLoading(false);
+
+    if (error) {
+      Alert.alert(t('profile.common.error'), error.message);
+      return;
+    }
+
+    Alert.alert(t('profile.changePassword.updatedTitle'), t('profile.changePassword.updatedMessage'), [
       { text: 'OK', onPress: () => router.back() },
     ]);
   };
@@ -47,6 +66,7 @@ export default function ChangePasswordScreen() {
           secureTextEntry={!show}
           placeholder="••••••••"
           placeholderTextColor={theme.placeholder}
+          editable={!loading}
         />
         <TouchableOpacity onPress={() => setShow(!show)}>
           <Ionicons name={show ? 'eye-off-outline' : 'eye-outline'} size={20} color={theme.textSecondary} />
@@ -58,14 +78,21 @@ export default function ChangePasswordScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>Change Password</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('profile.changePassword.title')}</Text>
 
-      {renderField('Current Password', current, setCurrent, showCurrent, setShowCurrent)}
-      {renderField('New Password', newPass, setNewPass, showNew, setShowNew)}
-      {renderField('Confirm New Password', confirm, setConfirm, showConfirm, setShowConfirm)}
+      {renderField(t('profile.changePassword.newPassword'), newPass, setNewPass, showNew, setShowNew)}
+      {renderField(t('profile.changePassword.confirmNewPassword'), confirm, setConfirm, showConfirm, setShowConfirm)}
 
-      <TouchableOpacity style={[styles.updateBtn, { backgroundColor: theme.primary }]} onPress={handleUpdate}>
-        <Text style={styles.updateBtnText}>Update Password</Text>
+      <TouchableOpacity
+        style={[styles.updateBtn, { backgroundColor: theme.primary, opacity: loading ? 0.7 : 1 }]}
+        onPress={handleUpdate}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text style={styles.updateBtnText}>{t('profile.changePassword.updatePassword')}</Text>
+        )}
       </TouchableOpacity>
     </View>
   );

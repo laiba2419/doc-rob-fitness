@@ -1,48 +1,64 @@
 import BackHeader from '@/components/BackHeader';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-
-type NotificationItem = {
-  id: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  subtitle: string;
-  time: string;
-};
-
-// Yeh list khali kar dein ([]) taake empty state dekh sakein
-const notifications: NotificationItem[] = [
-  { id: '1', icon: 'barbell-outline', title: 'New Exercise', subtitle: 'A new exercise has been added to your plan', time: 'Today' },
-  { id: '2', icon: 'pricetag-outline', title: 'Special Offers', subtitle: 'Get 30% off on premium plan this week', time: 'Today' },
-  { id: '3', icon: 'nutrition-outline', title: 'Nutrition Tips', subtitle: 'Check out healthy meal ideas for recovery', time: 'Yesterday' },
-  { id: '4', icon: 'star-outline', title: 'Subscription Alert', subtitle: 'Your subscription renews in 3 days', time: '2 days ago' },
-];
+import { fetchNotifications, NotificationItem } from '@/services/notificationServie';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function NotificationsScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ Moved inside the component so it can use t() -- "Today"/"Yesterday"/
+  // "{{count}} days ago" now come from the active language's translation.
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return t('common.today');
+    if (diffDays === 1) return t('common.yesterday');
+    return t('common.daysAgo', { count: diffDays });
+  };
+
+  useEffect(() => {
+    (async () => {
+      const data = await fetchNotifications();
+      setNotifications(data);
+      setLoading(false);
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>Notifications</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('common.notifications')}</Text>
 
       {notifications.length === 0 ? (
         <View style={styles.emptyWrap}>
-          {/* Note: yahan real illustration lagani hai, abhi placeholder icon hai */}
           <View style={[styles.emptyIconWrap, { backgroundColor: theme.surface }]}>
             <Ionicons name="notifications-off-outline" size={48} color={theme.textSecondary} />
           </View>
-          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-            You Haven't Any Notification
-          </Text>
+          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>{t('common.noNotifications')}</Text>
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
           {notifications.map((item) => (
             <View key={item.id} style={[styles.row, { backgroundColor: theme.surface }]}>
               <View style={[styles.iconWrap, { backgroundColor: theme.background }]}>
-                <Ionicons name={item.icon} size={20} color={theme.primary} />
+                <Ionicons name={item.icon as any} size={20} color={theme.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: theme.text }]}>{item.title}</Text>
@@ -50,7 +66,9 @@ export default function NotificationsScreen() {
                   {item.subtitle}
                 </Text>
               </View>
-              <Text style={[styles.rowTime, { color: theme.textSecondary }]}>{item.time}</Text>
+              <Text style={[styles.rowTime, { color: theme.textSecondary }]}>
+                {formatTimeAgo(item.created_at)}
+              </Text>
             </View>
           ))}
         </ScrollView>
@@ -61,6 +79,7 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, paddingTop: 56 },
+  centered: { justifyContent: 'center', alignItems: 'center' },
   title: { fontSize: 20, fontWeight: '700', marginBottom: 20 },
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16, paddingBottom: 100 },
   emptyIconWrap: { width: 110, height: 110, borderRadius: 55, justifyContent: 'center', alignItems: 'center' },

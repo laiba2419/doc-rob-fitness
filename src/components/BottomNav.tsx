@@ -1,28 +1,30 @@
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { usePathname, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type NavTab = {
   id: string;
-  label: string;
+  labelKey: string;
   icon: keyof typeof Ionicons.glyphMap;
   activeIcon: keyof typeof Ionicons.glyphMap;
   route: string;
 };
 
 const tabs: NavTab[] = [
-  { id: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home', route: '/' },
-  { id: 'diet', label: 'Diet Plan', icon: 'restaurant-outline', activeIcon: 'restaurant', route: '/diet' },
-  { id: 'store', label: 'Store', icon: 'bag-outline', activeIcon: 'bag', route: '/store' },
-  { id: 'report', label: 'Report', icon: 'bar-chart-outline', activeIcon: 'bar-chart', route: '/report' },
-  { id: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person', route: '/profile' },
+  { id: 'home', labelKey: 'tabs.home', icon: 'home-outline', activeIcon: 'home', route: '/home' },
+  { id: 'diet', labelKey: 'tabs.dietPlan', icon: 'restaurant-outline', activeIcon: 'restaurant', route: '/diet' },
+  { id: 'store', labelKey: 'tabs.store', icon: 'bag-outline', activeIcon: 'bag', route: '/store' },
+  { id: 'report', labelKey: 'tabs.report', icon: 'bar-chart-outline', activeIcon: 'bar-chart', route: '/report' },
+  { id: 'profile', labelKey: 'tabs.profile', icon: 'person-outline', activeIcon: 'person', route: '/profile' },
 ];
 
 export default function BottomNav() {
   const { theme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   const isActive = (route: string) => {
     if (route === '/') {
@@ -64,7 +66,7 @@ export default function BottomNav() {
                 active && styles.labelActive,
               ]}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </Text>
           </TouchableOpacity>
         );

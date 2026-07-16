@@ -5,18 +5,20 @@ import { useAuth } from '@/context/authcontext';
 import { useTheme } from '@/theme/ThemeContext';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
 export default function ContinuePhone() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { sendPhoneOtp } = useAuth();
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleContinue = async () => {
     if (!phone.trim()) {
-      Alert.alert('Missing Field', 'Please enter your phone number.');
+      Alert.alert(t('auth.continuePhone.missingFieldTitle'), t('auth.continuePhone.missingFieldMsg'));
       return;
     }
 
@@ -25,7 +27,7 @@ export default function ContinuePhone() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Failed to Send Code', error);
+      Alert.alert(t('auth.continuePhone.failedToSendTitle'), error);
       return;
     }
 
@@ -35,17 +37,23 @@ export default function ContinuePhone() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>Continue with phone</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('auth.continuePhone.title')}</Text>
       <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-        You'll receive 6 digit code to verify next.
+        {t('auth.continuePhone.subtitle')}
       </Text>
 
-      <InputField label="Phone Number" placeholder="+92 300 1234567" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+      <InputField
+        label={t('auth.continuePhone.phoneLabel')}
+        placeholder={t('auth.continuePhone.phonePlaceholder')}
+        value={phone}
+        onChangeText={setPhone}
+        keyboardType="phone-pad"
+      />
 
       {loading ? (
         <ActivityIndicator color={theme.primary} style={{ marginTop: 8 }} />
       ) : (
-        <PrimaryButton title="Continue" onPress={handleContinue} />
+        <PrimaryButton title={t('auth.common.continue')} onPress={handleContinue} />
       )}
     </View>
   );

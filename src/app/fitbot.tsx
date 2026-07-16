@@ -1,8 +1,12 @@
 import BackHeader from '@/components/BackHeader';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { fetchFitbotFaqs, FaqItem } from '@/services/fitbotService';
+import { translateList } from '@/lib/translate';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -19,31 +23,68 @@ type ChatMessage = {
   text: string;
 };
 
-const suggestedPrompts = [
-  'What are some effective warm-up exercises?',
-  'What are some healthy snacks for a fitness routine?',
-  'How can I improve my flexibility?',
-];
-
 export default function FitBotScreen() {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // ✅ i18n.language dependency add ki taake language switch karne pe FAQs
+  // (question + answer dono) dobara fetch+translate ho jayen.
+  useEffect(() => {
+    let isActive = true;
+    (async () => {
+      setLoading(true);
+      const data = await fetchFitbotFaqs();
+      const translated = await translateList(data, ['question', 'answer'], i18n.language);
+      if (isActive) {
+        setFaqs(translated);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      isActive = false;
+    };
+  }, [i18n.language]);
+
+  // User ek FAQ question pe tap kare -- uska pehle se likha hua answer turant chat mein aa jaye
+  const handleFaqPress = (faq: FaqItem) => {
+    const userMsg: ChatMessage = { id: Date.now().toString(), from: 'user', text: faq.question };
+    const botMsg: ChatMessage = { id: (Date.now() + 1).toString(), from: 'bot', text: faq.answer };
+    setMessages((prev) => [...prev, userMsg, botMsg]);
+  };
+
+  // Free-text input -- agar wo kisi FAQ se match kare to uska answer, warna default reply
   const sendMessage = (text: string) => {
     if (!text.trim()) return;
     const userMsg: ChatMessage = { id: Date.now().toString(), from: 'user', text };
-    setMessages((prev) => [...prev, userMsg]);
     setInput('');
 
-    // Note: yahan actual AI backend call lagani hai, abhi placeholder reply hai
+    const matched = faqs.find((f) => f.question.toLowerCase() === text.trim().toLowerCase());
+
+    setMessages((prev) => [...prev, userMsg]);
+
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
-        { id: (Date.now() + 1).toString(), from: 'bot', text: ' backend not connected.' },
+        {
+          id: (Date.now() + 1).toString(),
+          from: 'bot',
+          text: matched ? matched.answer : t('common.fitbotNoAnswer'),
+        },
       ]);
-    }, 600);
+    }, 400);
   };
+
+  if (loading) {
+    return (
+      <View style={[{ flex: 1 }, styles.centered, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -53,7 +94,7 @@ export default function FitBotScreen() {
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.headerRow}>
           <BackHeader />
-          <Text style={[styles.title, { color: theme.text }]}>FitBot</Text>
+          <Text style={[styles.title, { color: theme.text }]}>{t('common.fitbotTitle')}</Text>
           <TouchableOpacity style={styles.menuBtn}>
             <Ionicons name="ellipsis-horizontal" size={20} color={theme.text} />
           </TouchableOpacity>
@@ -64,16 +105,16 @@ export default function FitBotScreen() {
             <View style={[styles.botIconWrap, { backgroundColor: theme.surface }]}>
               <Ionicons name="chatbubble-ellipses-outline" size={36} color={theme.primary} />
             </View>
-            <Text style={[styles.greetingTitle, { color: theme.text }]}>Hello, Jacob! How may I help you?</Text>
+            <Text style={[styles.greetingTitle, { color: theme.text }]}>{t('common.fitbotGreeting')}</Text>
 
             <View style={styles.promptsWrap}>
-              {suggestedPrompts.map((prompt) => (
+              {faqs.map((faq) => (
                 <TouchableOpacity
-                  key={prompt}
+                  key={faq.id}
                   style={[styles.promptChip, { backgroundColor: theme.surface, borderColor: theme.border }]}
-                  onPress={() => sendMessage(prompt)}
+                  onPress={() => handleFaqPress(faq)}
                 >
-                  <Text style={[styles.promptText, { color: theme.text }]}>{prompt}</Text>
+                  <Text style={[styles.promptText, { color: theme.text }]}>{faq.question}</Text>
                   <Ionicons name="arrow-forward" size={14} color={theme.textSecondary} />
                 </TouchableOpacity>
               ))}
@@ -96,13 +137,27 @@ export default function FitBotScreen() {
                 </Text>
               </View>
             ))}
+
+            {/* Suggested questions bottom mein bhi milte rahein taake user aur pooch sake */}
+            <View style={[styles.promptsWrap, { marginTop: 12 }]}>
+              {faqs.map((faq) => (
+                <TouchableOpacity
+                  key={faq.id}
+                  style={[styles.promptChip, { backgroundColor: theme.surface, borderColor: theme.border }]}
+                  onPress={() => handleFaqPress(faq)}
+                >
+                  <Text style={[styles.promptText, { color: theme.text }]}>{faq.question}</Text>
+                  <Ionicons name="arrow-forward" size={14} color={theme.textSecondary} />
+                </TouchableOpacity>
+              ))}
+            </View>
           </ScrollView>
         )}
 
         <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <TextInput
             style={[styles.input, { color: theme.text }]}
-            placeholder="Type your question..."
+            placeholder={t('common.typeYourQuestion') ?? undefined}
             placeholderTextColor={theme.textSecondary}
             value={input}
             onChangeText={setInput}
@@ -122,6 +177,7 @@ export default function FitBotScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, paddingTop: 56 },
+  centered: { justifyContent: 'center', alignItems: 'center' },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   title: { fontSize: 17, fontWeight: '700' },
   menuBtn: { padding: 4 },

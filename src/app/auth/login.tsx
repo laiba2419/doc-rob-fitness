@@ -2,15 +2,20 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeContext';
 import { useAuth } from '@/context/authcontext';
+import { useUserProfile } from '@/context/UserProfileContext';
+import { supabase } from '@/lib/supabase';
 import InputField from '../../components/InputField';
 import PrimaryButton from '../../components/PrimaryButton';
 
 export default function LoginScreen() {
   const { theme, activeMode } = useTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { signIn } = useAuth();
+  const { loadProfileForUser } = useUserProfile();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
@@ -19,19 +24,31 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
-      Alert.alert('Missing Fields', 'Please enter both email and password.');
+      Alert.alert(t('auth.common.missingFieldsTitle'), t('auth.login.missingFieldsMsg'));
       return;
     }
 
     setLoading(true);
     const { error } = await signIn(email.trim(), password);
-    setLoading(false);
 
     if (error) {
-      Alert.alert('Login Failed', error);
+      setLoading(false);
+      Alert.alert(t('auth.login.loginFailedTitle'), error);
       return;
     }
 
+    // ✅ Load THIS user's real profile from Supabase and overwrite whatever
+    // was cached locally on this device -- without this, a previously
+    // logged-in account's name/email/photo could keep showing after a
+    // different account logs in on the same phone.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await loadProfileForUser(user.id);
+    }
+
+    setLoading(false);
     router.replace('/home');
   };
 
@@ -39,16 +56,16 @@ export default function LoginScreen() {
     <ScrollView style={{ backgroundColor: theme.background }} contentContainerStyle={styles.container}>
       <View style={styles.tabRow}>
         <View style={styles.tabPill}>
-          <Text style={[styles.tabText, { color: theme.text }]}>Login</Text>
+          <Text style={[styles.tabText, { color: theme.text }]}>{t('auth.login.tab')}</Text>
           <View style={[styles.tabUnderline, { backgroundColor: theme.primary }]} />
         </View>
       </View>
 
       <View style={styles.topSection}>
         <View style={styles.headingCol}>
-          <Text style={[styles.heading, { color: theme.text }]}>Welcome Back,</Text>
+          <Text style={[styles.heading, { color: theme.text }]}>{t('auth.login.welcomeBack')}</Text>
           <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-            Hello there, sign in to continue!
+            {t('auth.login.subtitle')}
           </Text>
         </View>
 
@@ -60,16 +77,16 @@ export default function LoginScreen() {
       </View>
 
       <InputField
-        label="Email"
-        placeholder="your_email@example.com"
+        label={t('auth.common.emailLabel')}
+        placeholder={t('auth.common.emailPlaceholder')}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         rightIcon="mail-outline"
       />
       <InputField
-        label="Password"
-        placeholder="Enter password"
+        label={t('auth.common.passwordLabel')}
+        placeholder={t('auth.common.passwordPlaceholder')}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -88,17 +105,17 @@ export default function LoginScreen() {
           >
             {rememberMe ? <Ionicons name="checkmark" size={14} color="#FFFFFF" /> : null}
           </View>
-          <Text style={{ color: isLight ? '#2F2F2F' : theme.text, fontSize: 13 }}>Remember Me</Text>
+          <Text style={{ color: isLight ? '#2F2F2F' : theme.text, fontSize: 13 }}>{t('auth.login.rememberMe')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push('/auth/forgot-password')}>
-          <Text style={{ color: theme.primary, fontSize: 13, fontWeight: '600' }}>Forgot Password?</Text>
+          <Text style={{ color: theme.primary, fontSize: 13, fontWeight: '600' }}>{t('auth.login.forgotPassword')}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.orRow}>
         <View style={[styles.orLine, { backgroundColor: theme.border }]} />
-        <Text style={[styles.orText, { color: isLight ? '#4A4A4A' : theme.textSecondary }]}>OR</Text>
+        <Text style={[styles.orText, { color: isLight ? '#4A4A4A' : theme.textSecondary }]}>{t('auth.login.or')}</Text>
         <View style={[styles.orLine, { backgroundColor: theme.border }]} />
       </View>
 
@@ -117,7 +134,7 @@ export default function LoginScreen() {
             styles.socialBtn,
             { backgroundColor: isLight ? theme.text : theme.surface, borderColor: theme.border },
           ]}
-          onPress={() => Alert.alert('Coming Soon', 'Google sign-in will be added shortly.')}
+          onPress={() => Alert.alert(t('auth.login.comingSoonTitle'), t('auth.login.comingSoonMsg'))}
         >
           <Ionicons name="logo-google" size={20} color={isLight ? '#FFFFFF' : theme.text} />
         </TouchableOpacity>
@@ -134,13 +151,13 @@ export default function LoginScreen() {
       {loading ? (
         <ActivityIndicator color={theme.primary} style={{ marginTop: 8, marginBottom: 16 }} />
       ) : (
-        <PrimaryButton title="Login" onPress={handleLogin} style={{ marginTop: 8, marginBottom: 16 }} />
+        <PrimaryButton title={t('auth.login.loginButton')} onPress={handleLogin} style={{ marginTop: 8, marginBottom: 16 }} />
       )}
 
       <View style={styles.signupRow}>
-        <Text style={{ color: isLight ? '#4A4A4A' : theme.textSecondary }}>New User? </Text>
+        <Text style={{ color: isLight ? '#4A4A4A' : theme.textSecondary }}>{t('auth.login.newUser')}</Text>
         <TouchableOpacity onPress={() => router.push('/auth/signup')}>
-          <Text style={{ color: theme.primary, fontWeight: '600' }}>Register Now</Text>
+          <Text style={{ color: theme.primary, fontWeight: '600' }}>{t('auth.login.registerNow')}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

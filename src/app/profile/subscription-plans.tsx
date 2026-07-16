@@ -1,37 +1,75 @@
 import BackHeader from '@/components/BackHeader';
-import { subscriptionPlans } from '@/data/profile';
+import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+type Plan = {
+  id: string;
+  name: string;
+  price: string;
+  period: string;
+  features: string[];
+  highlighted: boolean;
+};
 
 export default function SubscriptionPlansScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
-  const [selected, setSelected] = useState('yearly');
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [selected, setSelected] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPlans = async () => {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) {
+        Alert.alert(t('profile.common.error'), error.message);
+      } else if (data) {
+        setPlans(data as Plan[]);
+        const defaultPlan = (data as Plan[]).find((p) => p.highlighted) ?? data[0];
+        if (defaultPlan) setSelected(defaultPlan.id);
+      }
+      setLoading(false);
+    };
+    loadPlans();
+  }, [t]);
 
   const handleChoose = () => {
-    router.push({ pathname: '/profile/payment', params: { planId: selected } } as any);
+    if (!selected) return;
+    router.push({ pathname: '/profile/select-gateway', params: { planId: selected } } as any);
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.screen, { backgroundColor: theme.background, justifyContent: 'center' }]}>
+        <ActivityIndicator color={theme.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>Choose a Plan</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('profile.subscriptionPlans.title')}</Text>
 
       <ScrollView contentContainerStyle={{ gap: 14, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
-        {subscriptionPlans.map((plan) => {
+        {plans.map((plan) => {
           const active = selected === plan.id;
           return (
             <TouchableOpacity
               key={plan.id}
               style={[
                 styles.card,
-                {
-                  backgroundColor: active ? theme.primary : theme.card,
-                  borderColor: active ? theme.primary : theme.border,
-                },
+                { backgroundColor: active ? theme.primary : theme.card, borderColor: active ? theme.primary : theme.border },
               ]}
               activeOpacity={0.85}
               onPress={() => setSelected(plan.id)}
@@ -46,22 +84,16 @@ export default function SubscriptionPlansScreen() {
                 </View>
                 {plan.highlighted && !active && (
                   <View style={[styles.badge, { backgroundColor: theme.surface }]}>
-                    <Text style={[styles.badgeText, { color: theme.primary }]}>BEST VALUE</Text>
+                    <Text style={[styles.badgeText, { color: theme.primary }]}>{t('profile.subscriptionPlans.bestValue')}</Text>
                   </View>
                 )}
-                <Ionicons
-                  name={active ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={24}
-                  color={active ? '#FFFFFF' : theme.textSecondary}
-                />
+                <Ionicons name={active ? 'checkmark-circle' : 'ellipse-outline'} size={24} color={active ? '#FFFFFF' : theme.textSecondary} />
               </View>
               <View style={styles.featuresList}>
                 {plan.features.map((f) => (
                   <View key={f} style={styles.featureRow}>
                     <Ionicons name="checkmark" size={14} color={active ? '#FFFFFF' : theme.primary} />
-                    <Text style={[styles.featureText, { color: active ? 'rgba(255,255,255,0.9)' : theme.textSecondary }]}>
-                      {f}
-                    </Text>
+                    <Text style={[styles.featureText, { color: active ? 'rgba(255,255,255,0.9)' : theme.textSecondary }]}>{f}</Text>
                   </View>
                 ))}
               </View>
@@ -70,15 +102,16 @@ export default function SubscriptionPlansScreen() {
         })}
       </ScrollView>
 
-      <TouchableOpacity style={[styles.continueBtn, { backgroundColor: theme.primary }]} onPress={handleChoose}>
-        <Text style={styles.continueBtnText}>Continue</Text>
+      <TouchableOpacity style={[styles.continueBtn, { backgroundColor: theme.primary }]} onPress={handleChoose} disabled={!selected}>
+        <Text style={styles.continueBtnText}>{t('profile.subscriptionPlans.continue')}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, padding: 20 },
+  
+  screen: { flex: 1, paddingHorizontal: 20, paddingBottom: 20 },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
   card: { borderRadius: 18, borderWidth: 1.5, padding: 18 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },

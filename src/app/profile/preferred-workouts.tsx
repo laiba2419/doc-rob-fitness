@@ -1,9 +1,11 @@
 import BackHeader from '@/components/BackHeader';
-import { dietCategories } from '@/data/diets';
+import { DietCategory, fetchDietCategories } from '@/data/dietService';
+import { usePreferences } from '@/hooks/usePreferences';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Alert, Image, ImageSourcePropType, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Alert, Image, ImageSourcePropType, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type WorkoutCard = {
   id: string;
@@ -23,8 +25,34 @@ const workoutCards: WorkoutCard[] = [
 
 export default function PreferredWorkoutsScreen() {
   const { theme } = useTheme();
-  const [selectedWorkouts, setSelectedWorkouts] = useState<string[]>(['1']);
-  const [selectedDiets, setSelectedDiets] = useState<string[]>([dietCategories[0].id]);
+  const { t, i18n } = useTranslation();
+  const {
+    selectedWorkouts,
+    setSelectedWorkouts,
+    selectedDiets,
+    setSelectedDiets,
+    loading: loadingPrefs,
+    saving,
+    savePreferences,
+  } = usePreferences();
+
+  const [dietCategories, setDietCategories] = useState<Omit<DietCategory, 'meals'>[]>([]);
+  const [loadingDiets, setLoadingDiets] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      setLoadingDiets(true);
+      const cats = await fetchDietCategories(i18n.language);
+      if (isMounted) {
+        setDietCategories(cats);
+        setLoadingDiets(false);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [i18n.language]);
 
   const toggleWorkout = (id: string) => {
     setSelectedWorkouts((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
@@ -34,18 +62,22 @@ export default function PreferredWorkoutsScreen() {
     setSelectedDiets((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
   };
 
-  const handleSave = () => {
-    Alert.alert('Preferences Saved', 'Your workout and nutrition preferences have been updated.');
+  const handleSave = async () => {
+    const result = await savePreferences(selectedWorkouts, selectedDiets);
+    if (result.success) {
+      Alert.alert(t('profile.preferredWorkouts.savedTitle'), t('profile.preferredWorkouts.savedMessage'));
+    } else {
+      Alert.alert(t('profile.common.error'), result.error ?? t('profile.preferredWorkouts.genericSaveError'));
+    }
   };
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <BackHeader />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        <Text style={[styles.title, { color: theme.text }]}>Preferred Workouts & Nutrition</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('profile.preferredWorkouts.title')}</Text>
 
-        {/* Workout Types */}
-        <Text style={[styles.sectionLabel, { color: theme.text }]}>Workout Types</Text>
+        <Text style={[styles.sectionLabel, { color: theme.text }]}>{t('profile.preferredWorkouts.workoutTypes')}</Text>
         <View style={styles.workoutList}>
           {workoutCards.map((item) => {
             const active = selectedWorkouts.includes(item.id);
@@ -60,7 +92,7 @@ export default function PreferredWorkoutsScreen() {
                 activeOpacity={0.85}
               >
                 <Image source={item.image} style={styles.workoutImage} resizeMode="cover" />
-      {active && (
+                {active && (
                   <View style={styles.checkWrap}>
                     <Ionicons name="checkmark-circle" size={24} color={theme.primary} />
                   </View>
@@ -70,42 +102,52 @@ export default function PreferredWorkoutsScreen() {
           })}
         </View>
 
-        {/* Diet Preferences */}
-        <Text style={[styles.sectionLabel, { color: theme.text }]}>Diet Preferences</Text>
-        <View style={styles.dietGrid}>
-          {dietCategories.map((cat) => {
-            const active = selectedDiets.includes(cat.id);
-            return (
-              <TouchableOpacity
-                key={cat.id}
-                style={[
-                  styles.dietCard,
-                  {
-                    backgroundColor: theme.card,
-                    borderColor: active ? theme.primary : theme.border,
-                    borderWidth: active ? 2 : 1,
-                  },
-                ]}
-                onPress={() => toggleDiet(cat.id)}
-                activeOpacity={0.8}
-              >
-                <Image source={{ uri: cat.image }} style={styles.dietImage} resizeMode="cover" />
-                <View style={styles.dietFooter}>
-                  <Text style={[styles.dietLabel, { color: theme.text }]} numberOfLines={2}>
-                    {cat.label}
-                  </Text>
-                  {active && <Ionicons name="checkmark-circle" size={18} color={theme.primary} />}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        <Text style={[styles.sectionLabel, { color: theme.text }]}>{t('profile.preferredWorkouts.dietPreferences')}</Text>
+        {loadingDiets || loadingPrefs ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator size="large" color={theme.primary} />
+          </View>
+        ) : (
+          <View style={styles.dietGrid}>
+            {dietCategories.map((cat) => {
+              const active = selectedDiets.includes(cat.id);
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[
+                    styles.dietCard,
+                    {
+                      backgroundColor: theme.card,
+                      borderColor: active ? theme.primary : theme.border,
+                      borderWidth: active ? 2 : 1,
+                    },
+                  ]}
+                  onPress={() => toggleDiet(cat.id)}
+                  activeOpacity={0.8}
+                >
+                  <Image source={{ uri: cat.image }} style={styles.dietImage} resizeMode="cover" />
+                  <View style={styles.dietFooter}>
+                    <Text style={[styles.dietLabel, { color: theme.text }]} numberOfLines={2}>
+                      {cat.label}
+                    </Text>
+                    {active && <Ionicons name="checkmark-circle" size={18} color={theme.primary} />}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
 
         <TouchableOpacity
-          style={[styles.saveBtn, { backgroundColor: theme.primary }]}
+          style={[styles.saveBtn, { backgroundColor: theme.primary, opacity: saving ? 0.6 : 1 }]}
           onPress={handleSave}
+          disabled={saving}
         >
-          <Text style={styles.saveBtnText}>Save Preferences</Text>
+          {saving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveBtnText}>{t('profile.preferredWorkouts.savePreferences')}</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -120,8 +162,8 @@ const styles = StyleSheet.create({
   workoutList: { gap: 12, marginBottom: 24 },
   workoutCard: { borderRadius: 16, overflow: 'hidden', height: 160 },
   workoutImage: { width: '100%', height: '100%' },
-  
   checkWrap: { position: 'absolute', top: 10, right: 10 },
+  loadingWrap: { paddingVertical: 24, alignItems: 'center' },
   dietGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
   dietCard: { width: '47%', borderRadius: 14, overflow: 'hidden' },
   dietImage: { width: '100%', height: 90 },

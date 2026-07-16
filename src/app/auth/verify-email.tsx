@@ -4,11 +4,13 @@ import { useAuth } from '@/context/authcontext';
 import { useTheme } from '@/theme/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function VerifyEmailScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { verifySignupOtp, resendSignupOtp } = useAuth();
   const { email } = useLocalSearchParams<{ email: string }>();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -28,11 +30,11 @@ export default function VerifyEmailScreen() {
   const handleVerify = async () => {
     const code = otp.join('');
     if (code.length < 6) {
-      Alert.alert('Incomplete Code', 'Please enter the full 6 digit code.');
+      Alert.alert(t('auth.verifyEmail.incompleteCodeTitle'), t('auth.verifyEmail.incompleteCodeMsg'));
       return;
     }
     if (!email) {
-      Alert.alert('Error', 'Email missing, please go back and try again.');
+      Alert.alert(t('auth.verifyEmail.errorTitle'), t('auth.verifyEmail.emailMissingMsg'));
       return;
     }
 
@@ -41,7 +43,7 @@ export default function VerifyEmailScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Verification Failed', error);
+      Alert.alert(t('auth.verifyEmail.verificationFailedTitle'), error);
       return;
     }
 
@@ -52,18 +54,18 @@ export default function VerifyEmailScreen() {
     if (!email) return;
     const { error } = await resendSignupOtp(email);
     if (error) {
-      Alert.alert('Failed to Resend', error);
+      Alert.alert(t('auth.verifyEmail.failedToResendTitle'), error);
     } else {
-      Alert.alert('Code Sent', 'A new verification code has been sent to your email.');
+      Alert.alert(t('auth.verifyEmail.codeSentTitle'), t('auth.verifyEmail.codeSentMsg'));
     }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>Verify Your Email</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('auth.verifyEmail.title')}</Text>
       <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-        A verification code has been sent to your email. Please enter it below.
+        {t('auth.verifyEmail.subtitle')}
       </Text>
 
       <View style={styles.otpRow}>
@@ -83,11 +85,11 @@ export default function VerifyEmailScreen() {
       {loading ? (
         <ActivityIndicator color={theme.primary} style={{ marginBottom: 16 }} />
       ) : (
-        <PrimaryButton title="Verify & Proceed" onPress={handleVerify} />
+        <PrimaryButton title={t('auth.verifyEmail.verifyButton')} onPress={handleVerify} />
       )}
 
       <Text style={{ color: theme.primary, textAlign: 'center', marginTop: 16, fontWeight: '600' }} onPress={handleResend}>
-        Resend Code
+        {t('auth.verifyEmail.resendCode')}
       </Text>
     </View>
   );

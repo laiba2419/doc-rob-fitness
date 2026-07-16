@@ -2,13 +2,15 @@ import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function BackHeader() {
   const { theme } = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { marginTop: insets.top }]}>
       <TouchableOpacity
         onPress={() => router.back()}
         style={[styles.backButton, { backgroundColor: theme.surface }]}
@@ -29,3 +31,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+

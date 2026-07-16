@@ -1,44 +1,67 @@
 import BottomNav from '@/components/BottomNav';
 import { useUserProfile } from '@/context/UserProfileContext';
+import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
+import { clearNotificationsOnLogout } from "@/lib/notifications";
 type MenuItem = {
   id: string;
-  label: string;
+  labelKey: string;
   icon: keyof typeof Ionicons.glyphMap;
   route: string;
 };
 
 const menuItems: MenuItem[] = [
-  { id: 'blog', label: 'Blog', icon: 'newspaper-outline', route: '/profile/blog' },
-  { id: 'subscription', label: 'Subscription Plans', icon: 'ribbon-outline', route: '/profile/subscription' },
-  { id: 'preferred', label: 'Preferred Workouts & Nutrition', icon: 'heart-outline', route: '/profile/preferred-workouts' },
-  { id: 'reminders', label: 'Daily Reminder', icon: 'alarm-outline', route: '/profile/reminders' },
-  { id: 'assigned', label: 'Assigned Workout & Diet', icon: 'people-outline', route: '/profile/assigned-workout' },
-  { id: 'settings', label: 'Settings', icon: 'settings-outline', route: '/profile/settings' },
-  { id: 'about', label: 'About App', icon: 'information-circle-outline', route: '/profile/about' },
+  { id: 'blog', labelKey: 'profile.menu.items.blog', icon: 'newspaper-outline', route: '/profile/blog' },
+  { id: 'subscription', labelKey: 'profile.menu.items.subscription', icon: 'ribbon-outline', route: '/profile/subscription' },
+  { id: 'preferred', labelKey: 'profile.menu.items.preferred', icon: 'heart-outline', route: '/profile/preferred-workouts' },
+  { id: 'reminders', labelKey: 'profile.menu.items.reminders', icon: 'alarm-outline', route: '/profile/reminders' },
+  { id: 'assigned', labelKey: 'profile.menu.items.assigned', icon: 'people-outline', route: '/profile/assigned-workout' },
+  { id: 'settings', labelKey: 'profile.menu.items.settings', icon: 'settings-outline', route: '/profile/settings' },
+  { id: 'about', labelKey: 'profile.menu.items.about', icon: 'information-circle-outline', route: '/profile/about' },
 ];
 
 export default function ProfileScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
-  const { profile, setProfile } = useUserProfile();
+  const { profile, setProfile, clearProfile } = useUserProfile();
 
   const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log Out', style: 'destructive', onPress: () => router.replace('/auth/login' as any) },
+    Alert.alert(t('profile.menu.logoutConfirmTitle'), t('profile.menu.logoutConfirmMessage'), [
+      { text: t('profile.common.cancel'), style: 'cancel' },
+      {
+        text: t('profile.menu.items.logout'),
+        style: 'destructive',
+        onPress: async () => {
+          // ✅ This was missing before -- the button only navigated to the
+          // login screen without ever actually ending the Supabase session.
+          await clearNotificationsOnLogout();
+        try {
+  await clearNotificationsOnLogout();
+         } catch (e) {
+         console.log("Notification cleanup failed", e);
+         }
+
+await supabase.auth.signOut();
+          // ✅ Also clear the cached local profile, so if a different
+          // account logs in on this device next, it won't inherit this
+          // user's name/email/photo from AsyncStorage.
+          await clearProfile();
+          router.replace('/auth/login' as any);
+        },
+      },
     ]);
   };
 
   const handleRemovePhoto = () => {
-    Alert.alert('Remove Photo', 'Profile photo remove karna chahte hain?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('profile.menu.removePhotoTitle'), t('profile.menu.removePhotoMessage'), [
+      { text: t('profile.common.cancel'), style: 'cancel' },
       {
-        text: 'Remove',
+        text: t('profile.menu.removeAction'),
         style: 'destructive',
         onPress: () => setProfile({ ...profile, avatarUri: undefined }),
       },
@@ -50,12 +73,12 @@ export default function ProfileScreen() {
   const displayName =
     profile.firstName || profile.lastName
       ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
-      : 'Your Name';
+      : t('profile.menu.yourName');
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={[styles.blueBg, { backgroundColor: theme.primary }]}>
-        <Text style={styles.headerTitle}>My Profile</Text>
+        <Text style={styles.headerTitle}>{t('profile.menu.screenTitle')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -76,11 +99,11 @@ export default function ProfileScreen() {
             <View style={styles.nameBlock}>
               <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>{displayName}</Text>
               <Text style={[styles.emailText, { color: theme.textSecondary }]} numberOfLines={1}>
-                {profile.email || 'your@email.com'}
+                {profile.email || t('profile.menu.yourEmail')}
               </Text>
               {profile.avatarUri ? (
                 <TouchableOpacity onPress={handleRemovePhoto} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Text style={styles.removePhoto}>Remove Photo</Text>
+                  <Text style={styles.removePhoto}>{t('profile.menu.removePhoto')}</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -94,21 +117,21 @@ export default function ProfileScreen() {
                 {profile.weight ?? '--'}
                 <Text style={[styles.statUnit, { color: theme.primary }]}> {profile.weightUnit ?? 'kg'}</Text>
               </Text>
-              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Weight</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{t('profile.menu.weight')}</Text>
             </View>
             <View style={[styles.statBox]}>
               <Text style={[styles.statValue, { color: theme.primary }]}>
                 {profile.height ?? '--'}
                 <Text style={[styles.statUnit, { color: theme.primary }]}> {profile.heightUnit ?? 'cm'}</Text>
               </Text>
-              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Height</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{t('profile.menu.height')}</Text>
             </View>
             <View style={[styles.statBox]}>
               <Text style={[styles.statValue, { color: theme.primary }]}>
                 {profile.age ?? '--'}
-                <Text style={[styles.statUnit, { color: theme.primary }]}> yr</Text>
+                <Text style={[styles.statUnit, { color: theme.primary }]}> {t('profile.menu.yearsShort')}</Text>
               </Text>
-              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Age</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{t('profile.menu.age')}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -130,7 +153,7 @@ export default function ProfileScreen() {
               <View style={[styles.menuIconWrap, { backgroundColor: theme.surface }]}>
                 <Ionicons name={item.icon} size={18} color={theme.text} />
               </View>
-              <Text style={[styles.menuLabel, { color: theme.text }]}>{item.label}</Text>
+              <Text style={[styles.menuLabel, { color: theme.text }]}>{t(item.labelKey)}</Text>
               <Ionicons name="chevron-forward" size={17} color={theme.textSecondary} />
             </TouchableOpacity>
           ))}
@@ -143,7 +166,7 @@ export default function ProfileScreen() {
             <View style={[styles.menuIconWrap, { backgroundColor: '#FEE2E2' }]}>
               <Ionicons name="exit-outline" size={18} color="#EF4444" />
             </View>
-            <Text style={[styles.menuLabel, { color: '#EF4444' }]}>Logout</Text>
+            <Text style={[styles.menuLabel, { color: '#EF4444' }]}>{t('profile.menu.items.logout')}</Text>
             <Ionicons name="chevron-forward" size={17} color="#EF4444" />
           </TouchableOpacity>
         </View>

@@ -1,18 +1,20 @@
 import BackHeader from '@/components/BackHeader';
+import { LanguageCode, useLanguage } from '@/context/LanguageContext';
 import { languages } from '@/data/profile';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function LanguageScreen() {
   const { theme } = useTheme();
-  const [selected, setSelected] = useState('en');
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLanguage();
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>Choose Language</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('common.chooseLanguage')}</Text>
 
       <FlatList
         data={languages}
@@ -20,14 +22,14 @@ export default function LanguageScreen() {
         contentContainerStyle={{ gap: 10 }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
-          const active = selected === item.code;
+          const active = language === item.code;
           return (
             <TouchableOpacity
               style={[
                 styles.row,
                 { backgroundColor: theme.card, borderColor: active ? theme.primary : theme.border },
               ]}
-              onPress={() => setSelected(item.code)}
+              onPress={() => setLanguage(item.code as LanguageCode)}
               activeOpacity={0.8}
             >
               <View style={{ flex: 1 }}>

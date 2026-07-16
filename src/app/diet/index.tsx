@@ -1,25 +1,47 @@
 import BottomNav from '@/components/BottomNav';
 import { useUserProfile } from '@/context/UserProfileContext';
-import { dietCategories, featuredDietMealIds, getMealById, otherDietMealIds } from '@/data/diets';
+import { DietCategory, featuredDietMealIds, fetchDietCategories, fetchMealsByIds, Meal, otherDietMealIds } from '@/data/dietService';
+import { useFavorites } from '@/hooks/useFavorites';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function DietsScreen() {
   const { theme } = useTheme();
   const router = useRouter();
   const { profile } = useUserProfile();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { t, i18n } = useTranslation();
 
-  const featuredMeals = useMemo(
-    () => featuredDietMealIds.map((id) => getMealById(id)).filter(Boolean) as { meal: any; category: any }[],
-    []
-  );
-  const otherMeals = useMemo(
-    () => otherDietMealIds.map((id) => getMealById(id)).filter(Boolean) as { meal: any; category: any }[],
-    []
-  );
+  const [categories, setCategories] = useState<Omit<DietCategory, 'meals'>[]>([]);
+  const [featuredMeals, setFeaturedMeals] = useState<Meal[]>([]);
+  const [otherMeals, setOtherMeals] = useState<Meal[]>([]);
+  const [loading, setLoading] = useState(true);
+  console.log('lang:', i18n.language);
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      setLoading(true);
+      const [cats, featured, other] = await Promise.all([
+        fetchDietCategories(i18n.language),
+        fetchMealsByIds(featuredDietMealIds, i18n.language),
+        fetchMealsByIds(otherDietMealIds, i18n.language),
+      ]);
+      if (!isMounted) return;
+      setCategories(cats);
+      setFeaturedMeals(featured);
+      setOtherMeals(other);
+      setLoading(false);
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [i18n.language]);
 
   const openCategory = (categoryId: string) => {
     router.push({ pathname: '/diet/category', params: { id: categoryId } });
@@ -29,17 +51,27 @@ export default function DietsScreen() {
     router.push({ pathname: '/diet/meal', params: { id: mealId } });
   };
 
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.headerRow}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Diets</Text>
-          <Ionicons name="heart-outline" size={22} color={theme.text} />
+          <Text style={[styles.headerTitle, { color: theme.text }]}>{t('diet.title')}</Text>
+          <TouchableOpacity onPress={() => router.push('/diet/favorites')}>
+            <Ionicons name="heart-outline" size={22} color={theme.text} />
+          </TouchableOpacity>
         </View>
 
         {/* Diet Categories — swipeable row, arrow opens the full categories grid */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Diet Categories</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('diet.categories')}</Text>
           <TouchableOpacity onPress={() => router.push('/diet/categories')}>
             <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
           </TouchableOpacity>
@@ -50,7 +82,7 @@ export default function DietsScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryRow}
         >
-          {dietCategories.map((cat) => (
+          {categories.map((cat) => (
             <TouchableOpacity
               key={cat.id}
               style={styles.categoryItem}
@@ -65,13 +97,13 @@ export default function DietsScreen() {
         </ScrollView>
 
         {/* Featured diets */}
-        <Text style={[styles.sectionTitle, { color: theme.text, marginTop: 24 }]}>Featured diets</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text, marginTop: 24 }]}>{t('diet.featured')}</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.featuredRow}
         >
-          {featuredMeals.map(({ meal }) => (
+          {featuredMeals.map((meal) => (
             <TouchableOpacity
               key={meal.id}
               style={[styles.featuredCard, { backgroundColor: theme.surface }]}
@@ -79,14 +111,19 @@ export default function DietsScreen() {
             >
               <Image source={{ uri: meal.image }} style={styles.featuredImage} />
               <View style={styles.proBadge}>
-                <Text style={styles.proBadgeText}>Pro</Text>
+                <Text style={styles.proBadgeText}>{t('diet.pro')}</Text>
               </View>
-              <Ionicons
-                name="heart-outline"
-                size={16}
-                color="#FFFFFF"
+              <TouchableOpacity
                 style={styles.featuredHeart}
-              />
+                onPress={() => toggleFavorite(meal.id)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons
+                  name={isFavorite(meal.id) ? 'heart' : 'heart-outline'}
+                  size={16}
+                  color={isFavorite(meal.id) ? '#FF4757' : '#FFFFFF'}
+                />
+              </TouchableOpacity>
               <Text style={[styles.featuredLabel, { color: theme.text }]} numberOfLines={2}>
                 {meal.name}
               </Text>
@@ -96,11 +133,11 @@ export default function DietsScreen() {
 
         {/* Other diets */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Other diets</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('diet.other')}</Text>
           <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
         </View>
 
-        {otherMeals.map(({ meal }) => (
+        {otherMeals.map((meal) => (
           <TouchableOpacity
             key={meal.id}
             style={styles.otherRow}
@@ -112,7 +149,16 @@ export default function DietsScreen() {
                 {meal.name}
               </Text>
             </View>
-            <Ionicons name="heart-outline" size={18} color={theme.textSecondary} />
+            <TouchableOpacity
+              onPress={() => toggleFavorite(meal.id)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons
+                name={isFavorite(meal.id) ? 'heart' : 'heart-outline'}
+                size={18}
+                color={isFavorite(meal.id) ? '#FF4757' : theme.textSecondary}
+              />
+            </TouchableOpacity>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -124,6 +170,7 @@ export default function DietsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  centered: { justifyContent: 'center', alignItems: 'center' },
   scrollContent: { padding: 20, paddingTop: 56, paddingBottom: 20 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   headerTitle: { fontSize: 24, fontWeight: '700' },

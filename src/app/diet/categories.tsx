@@ -1,43 +1,70 @@
 import BackHeader from '@/components/BackHeader';
-import { dietCategories } from '@/data/diets';
+import { DietCategory, fetchDietCategories } from '@/data/dietService';
 import { useTheme } from '@/theme/ThemeContext';
 import { useRouter } from 'expo-router';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function DietCategoriesScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { t, i18n } = useTranslation();
+
+  const [categories, setCategories] = useState<Omit<DietCategory, 'meals'>[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      setLoading(true);
+      const cats = await fetchDietCategories(i18n.language);
+      if (isMounted) {
+        setCategories(cats);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [i18n.language]);
 
   const openCategory = (categoryId: string) => {
-    console.log('Tapped category:', categoryId);
     router.push({ pathname: '/diet/category', params: { id: categoryId } });
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>Diet Categories</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('diet.categories')}</Text>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.grid}>
-        {dietCategories.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={styles.item}
-            onPress={() => openCategory(cat.id)}
-          >
-            <Image source={{ uri: cat.image }} style={[styles.image, { borderColor: theme.border }]} />
-            <Text style={[styles.label, { color: theme.text }]} numberOfLines={2}>
-              {cat.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.grid}>
+          {categories.map((cat) => (
+            <TouchableOpacity
+              key={cat.id}
+              style={styles.item}
+              onPress={() => openCategory(cat.id)}
+            >
+              <Image source={{ uri: cat.image }} style={[styles.image, { borderColor: theme.border }]} />
+              <Text style={[styles.label, { color: theme.text }]} numberOfLines={2}>
+                {cat.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, paddingTop: 56 },
+  container: { flex: 1, paddingHorizontal: 20, paddingBottom: 20 },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   title: { fontSize: 20, fontWeight: '700', marginBottom: 20 },
   grid: {
     flexDirection: 'row',

@@ -1,44 +1,25 @@
 import BackHeader from '@/components/BackHeader';
 import { useTheme } from '@/theme/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-const sections = [
-  {
-    heading: '1. Acceptance of Terms',
-    body: 'By creating an account and using GetFit, you agree to be bound by these Terms & Conditions.',
-  },
-  {
-    heading: '2. Use of the App',
-    body: 'GetFit provides fitness tracking, workout plans, and nutrition guidance for personal use only. You agree not to misuse the app or its content.',
-  },
-  {
-    heading: '3. Health Disclaimer',
-    body: 'GetFit is not a substitute for professional medical advice. Consult a physician before beginning any new workout or diet program.',
-  },
-  {
-    heading: '4. Subscriptions',
-    body: 'Premium features require an active subscription. Subscriptions renew automatically unless cancelled before the renewal date.',
-  },
-  {
-    heading: '5. Limitation of Liability',
-    body: 'GetFit is provided "as is" without warranties of any kind. We are not liable for any injury or damages resulting from use of the app.',
-  },
-];
+const sectionKeys = ['s1', 's2', 's3', 's4', 's5'];
 
 export default function TermsScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <BackHeader />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={[styles.title, { color: theme.text }]}>Terms & Conditions</Text>
-        <Text style={[styles.updated, { color: theme.textSecondary }]}>Last updated: June 2026</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('profile.terms.title')}</Text>
+        <Text style={[styles.updated, { color: theme.textSecondary }]}>{t('profile.terms.lastUpdated')}</Text>
 
-        {sections.map((s) => (
-          <View key={s.heading} style={styles.section}>
-            <Text style={[styles.heading, { color: theme.text }]}>{s.heading}</Text>
-            <Text style={[styles.body, { color: theme.textSecondary }]}>{s.body}</Text>
+        {sectionKeys.map((key) => (
+          <View key={key} style={styles.section}>
+            <Text style={[styles.heading, { color: theme.text }]}>{t(`profile.terms.${key}Heading`)}</Text>
+            <Text style={[styles.body, { color: theme.textSecondary }]}>{t(`profile.terms.${key}Body`)}</Text>
           </View>
         ))}
       </ScrollView>

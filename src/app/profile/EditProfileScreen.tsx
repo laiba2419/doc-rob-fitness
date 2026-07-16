@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActionSheetIOS,
   Alert,
@@ -24,6 +25,7 @@ type Gender = 'Male' | 'Female' | 'Other';
 
 export default function EditProfileScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { profile, setProfile } = useUserProfile();
 
@@ -39,6 +41,12 @@ export default function EditProfileScreen() {
   const [weightUnit, setWeightUnit] = useState<WeightUnit>((profile.weightUnit as WeightUnit) ?? 'kg');
   const [height, setHeight] = useState(profile.height ? String(profile.height) : '');
   const [heightUnit, setHeightUnit] = useState<HeightUnit>((profile.heightUnit as HeightUnit) ?? 'cm');
+
+  const genderKeyMap: Record<Gender, string> = {
+    Male: t('profile.editProfilePhoto.male'),
+    Female: t('profile.editProfilePhoto.female'),
+    Other: t('profile.editProfilePhoto.other'),
+  };
 
   const pickFromGallery = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -70,14 +78,14 @@ export default function EditProfileScreen() {
   const handleAvatarPress = () => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
-        { options: ['Cancel', 'Take Photo', 'Choose from Gallery'], cancelButtonIndex: 0 },
+        { options: [t('profile.common.cancel'), t('profile.editProfilePhoto.takePhoto'), t('profile.editProfilePhoto.chooseFromGallery')], cancelButtonIndex: 0 },
         (i) => { if (i === 1) pickFromCamera(); if (i === 2) pickFromGallery(); }
       );
     } else {
-      Alert.alert('Update Photo', '', [
-        { text: 'Take Photo', onPress: pickFromCamera },
-        { text: 'Choose from Gallery', onPress: pickFromGallery },
-        { text: 'Cancel', style: 'cancel' },
+      Alert.alert(t('profile.editProfilePhoto.updatePhotoTitle'), '', [
+        { text: t('profile.editProfilePhoto.takePhoto'), onPress: pickFromCamera },
+        { text: t('profile.editProfilePhoto.chooseFromGallery'), onPress: pickFromGallery },
+        { text: t('profile.common.cancel'), style: 'cancel' },
       ]);
     }
   };
@@ -111,7 +119,7 @@ export default function EditProfileScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <Text style={styles.headerTitle}>{t('profile.editProfilePhoto.title')}</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -132,53 +140,54 @@ export default function EditProfileScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={[styles.fields, { marginTop: 44 }]}>
-          <Text style={labelStyle}>First Name</Text>
+          <Text style={labelStyle}>{t('profile.editProfilePhoto.firstName')}</Text>
           <View style={[styles.inputWrap, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <TextInput style={[styles.inputInner, { color: theme.text }]} value={firstName} onChangeText={setFirstName} placeholder="First Name" placeholderTextColor={theme.textSecondary} />
+            <TextInput style={[styles.inputInner, { color: theme.text }]} value={firstName} onChangeText={setFirstName} placeholder={t('profile.editProfilePhoto.firstName')} placeholderTextColor={theme.textSecondary} />
             <Ionicons name="person-outline" size={16} color={theme.textSecondary} />
           </View>
 
-          <Text style={labelStyle}>Last Name</Text>
+          <Text style={labelStyle}>{t('profile.editProfilePhoto.lastName')}</Text>
           <View style={[styles.inputWrap, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <TextInput style={[styles.inputInner, { color: theme.text }]} value={lastName} onChangeText={setLastName} placeholder="Last Name" placeholderTextColor={theme.textSecondary} />
+            <TextInput style={[styles.inputInner, { color: theme.text }]} value={lastName} onChangeText={setLastName} placeholder={t('profile.editProfilePhoto.lastName')} placeholderTextColor={theme.textSecondary} />
             <Ionicons name="person-outline" size={16} color={theme.textSecondary} />
           </View>
 
-          <Text style={labelStyle}>Email</Text>
+          <Text style={labelStyle}>{t('profile.editProfilePhoto.email')}</Text>
           <View style={[styles.inputWrap, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <TextInput style={[styles.inputInner, { color: theme.text }]} value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" autoCapitalize="none" placeholderTextColor={theme.textSecondary} />
+            <TextInput style={[styles.inputInner, { color: theme.text }]} value={email} onChangeText={setEmail} placeholder={t('profile.editProfilePhoto.email')} keyboardType="email-address" autoCapitalize="none" placeholderTextColor={theme.textSecondary} />
             <Ionicons name="mail-outline" size={16} color={theme.textSecondary} />
           </View>
 
-          <Text style={labelStyle}>Mobile Number</Text>
+          <Text style={labelStyle}>{t('profile.editProfile.mobileNumber')}</Text>
           <View style={[styles.inputWrap, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <TextInput style={[styles.inputInner, { color: theme.text }]} value={mobile} onChangeText={setMobile} placeholder="+91 | Mobile number" keyboardType="phone-pad" placeholderTextColor={theme.textSecondary} />
+            <TextInput style={[styles.inputInner, { color: theme.text }]} value={mobile} onChangeText={setMobile} placeholder={t('profile.editProfilePhoto.mobileNumber')} keyboardType="phone-pad" placeholderTextColor={theme.textSecondary} />
             <Ionicons name="call-outline" size={16} color={theme.textSecondary} />
           </View>
 
-          <Text style={labelStyle}>Age</Text>
+          <Text style={labelStyle}>{t('profile.editProfilePhoto.age')}</Text>
           <View style={[styles.inputWrap, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <TextInput style={[styles.inputInner, { color: theme.text }]} value={age} onChangeText={setAge} placeholder="Age" keyboardType="number-pad" placeholderTextColor={theme.textSecondary} />
+            <TextInput style={[styles.inputInner, { color: theme.text }]} value={age} onChangeText={setAge} placeholder={t('profile.editProfilePhoto.age')} keyboardType="number-pad" placeholderTextColor={theme.textSecondary} />
             <Ionicons name="person-outline" size={16} color={theme.textSecondary} />
           </View>
 
-          <Text style={labelStyle}>Gender</Text>
+          <Text style={labelStyle}>{t('profile.editProfilePhoto.gender')}</Text>
           <View style={[styles.inputWrap, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <Text style={[styles.inputInner, { color: theme.text }]}>{gender}</Text>
+            <Text style={[styles.inputInner, { color: theme.text }]}>{genderKeyMap[gender]}</Text>
             <TouchableOpacity
               onPress={() => {
-                const options = ['Male', 'Female', 'Other', 'Cancel'];
+                const options: Gender[] = ['Male', 'Female', 'Other'];
+                const optionLabels = [...options.map((o) => genderKeyMap[o]), t('profile.common.cancel')];
                 if (Platform.OS === 'ios') {
                   ActionSheetIOS.showActionSheetWithOptions(
-                    { options, cancelButtonIndex: 3 },
-                    (i) => { if (i < 3) setGender(options[i] as Gender); }
+                    { options: optionLabels, cancelButtonIndex: 3 },
+                    (i) => { if (i < 3) setGender(options[i]); }
                   );
                 } else {
-                  Alert.alert('Select Gender', '', [
-                    { text: 'Male', onPress: () => setGender('Male') },
-                    { text: 'Female', onPress: () => setGender('Female') },
-                    { text: 'Other', onPress: () => setGender('Other') },
-                    { text: 'Cancel', style: 'cancel' },
+                  Alert.alert(t('profile.editProfilePhoto.selectGenderTitle'), '', [
+                    { text: genderKeyMap.Male, onPress: () => setGender('Male') },
+                    { text: genderKeyMap.Female, onPress: () => setGender('Female') },
+                    { text: genderKeyMap.Other, onPress: () => setGender('Other') },
+                    { text: t('profile.common.cancel'), style: 'cancel' },
                   ]);
                 }
               }}
@@ -187,40 +196,40 @@ export default function EditProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={labelStyle}>Weight</Text>
+          <Text style={labelStyle}>{t('profile.editProfilePhoto.weight')}</Text>
           <View style={[styles.inputWrap, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <TextInput style={[styles.inputInner, { color: theme.text }]} value={weight} onChangeText={setWeight} placeholder="Weight" keyboardType="decimal-pad" placeholderTextColor={theme.textSecondary} />
+            <TextInput style={[styles.inputInner, { color: theme.text }]} value={weight} onChangeText={setWeight} placeholder={t('profile.editProfilePhoto.weight')} keyboardType="decimal-pad" placeholderTextColor={theme.textSecondary} />
             <View style={styles.unitToggle}>
               <TouchableOpacity
                 style={[styles.unitBtn, weightUnit === 'lb' && { backgroundColor: theme.primary }]}
                 onPress={() => setWeightUnit('lb')}
               >
-                <Text style={[styles.unitText, { color: weightUnit === 'lb' ? '#FFF' : theme.textSecondary }]}>LB</Text>
+                <Text style={[styles.unitText, { color: weightUnit === 'lb' ? '#FFF' : theme.textSecondary }]}>{t('profile.editProfilePhoto.lb')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.unitBtn, weightUnit === 'kg' && { backgroundColor: theme.primary }]}
                 onPress={() => setWeightUnit('kg')}
               >
-                <Text style={[styles.unitText, { color: weightUnit === 'kg' ? '#FFF' : theme.textSecondary }]}>KG</Text>
+                <Text style={[styles.unitText, { color: weightUnit === 'kg' ? '#FFF' : theme.textSecondary }]}>{t('profile.editProfilePhoto.kg')}</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          <Text style={labelStyle}>Height</Text>
+          <Text style={labelStyle}>{t('profile.editProfilePhoto.height')}</Text>
           <View style={[styles.inputWrap, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <TextInput style={[styles.inputInner, { color: theme.text }]} value={height} onChangeText={setHeight} placeholder="Height" keyboardType="decimal-pad" placeholderTextColor={theme.textSecondary} />
+            <TextInput style={[styles.inputInner, { color: theme.text }]} value={height} onChangeText={setHeight} placeholder={t('profile.editProfilePhoto.height')} keyboardType="decimal-pad" placeholderTextColor={theme.textSecondary} />
             <View style={styles.unitToggle}>
               <TouchableOpacity
                 style={[styles.unitBtn, heightUnit === 'ft' && { backgroundColor: theme.primary }]}
                 onPress={() => setHeightUnit('ft')}
               >
-                <Text style={[styles.unitText, { color: heightUnit === 'ft' ? '#FFF' : theme.textSecondary }]}>FT</Text>
+                <Text style={[styles.unitText, { color: heightUnit === 'ft' ? '#FFF' : theme.textSecondary }]}>{t('profile.editProfilePhoto.ft')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.unitBtn, heightUnit === 'cm' && { backgroundColor: theme.primary }]}
                 onPress={() => setHeightUnit('cm')}
               >
-                <Text style={[styles.unitText, { color: heightUnit === 'cm' ? '#FFF' : theme.textSecondary }]}>CM</Text>
+                <Text style={[styles.unitText, { color: heightUnit === 'cm' ? '#FFF' : theme.textSecondary }]}>{t('profile.editProfilePhoto.cm')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -231,7 +240,7 @@ export default function EditProfileScreen() {
           onPress={handleSave}
           activeOpacity={0.85}
         >
-          <Text style={styles.saveBtnText}>Save Changes</Text>
+          <Text style={styles.saveBtnText}>{t('profile.editProfilePhoto.saveChanges')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

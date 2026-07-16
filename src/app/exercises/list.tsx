@@ -3,6 +3,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Modal,
   ScrollView,
@@ -13,11 +14,8 @@ import {
   View,
 } from 'react-native';
 
-type Exercise = {
+type ExerciseMeta = {
   id: string;
-  title: string;
-  meta: string;
-  description: string;
   bodyPart: string;
   equipment: string;
   level: 'beginner' | 'intermediate' | 'advanced';
@@ -26,243 +24,70 @@ type Exercise = {
 // NOTE: bodyPart / equipment values here must match the ids used on Home,
 // /exercises/body-part, and /exercises/equipment -- that's what keeps the
 // filters and the "tap a category" navigation in sync across the app.
-const exercises: Exercise[] = [
-  {
-    id: '1',
-    title: 'Hammer Curls',
-    meta: '3 Sets | 12 Reps',
-    description:
-      'Hold a dumbbell in each hand with palms facing your body and curl both weights up together without rotating your wrists. Targets the biceps and forearms.',
-    bodyPart: 'biceps',
-    equipment: 'dumbbell',
-    level: 'beginner',
-  },
-  {
-    id: '2',
-    title: 'Concentration Curls',
-    meta: '3 Sets | 10 Reps',
-    description:
-      'Sit on a bench, rest your elbow against your inner thigh, and curl the dumbbell slowly toward your shoulder. Isolates the biceps for a deeper contraction.',
-    bodyPart: 'biceps',
-    equipment: 'dumbbell',
-    level: 'beginner',
-  },
-  {
-    id: '3',
-    title: 'Incline Bicep Curls',
-    meta: '3 Sets | 12 Reps',
-    description:
-      'Lie back on an incline bench and curl the dumbbells up, keeping your elbows behind your torso. Increases the stretch on the biceps for greater activation.',
-    bodyPart: 'biceps',
-    equipment: 'dumbbell',
-    level: 'intermediate',
-  },
-  {
-    id: '4',
-    title: 'Reverse Curls',
-    meta: '3 Sets | 10 Reps',
-    description:
-      'Grip the dumbbells with palms facing down and curl upward. Shifts the emphasis onto the forearms and brachialis.',
-    bodyPart: 'biceps',
-    equipment: 'dumbbell',
-    level: 'intermediate',
-  },
-  {
-    id: '5',
-    title: 'Alternating Bicep Curls',
-    meta: '3 Sets | 12 Reps',
-    description:
-      'Curl one dumbbell at a time while keeping the opposite arm extended, allowing a full range of motion for each arm individually.',
-    bodyPart: 'biceps',
-    equipment: 'dumbbell',
-    level: 'advanced',
-  },
-  {
-    id: '6',
-    title: 'Wide Hands Push-Up',
-    meta: '3 Sets | 15 Reps',
-    description:
-      'Place your hands wider than shoulder-width and lower your chest toward the floor, then press back up. Emphasizes the outer chest muscles.',
-    bodyPart: 'chest',
-    equipment: 'none',
-    level: 'beginner',
-  },
-  {
-    id: '7',
-    title: 'Barbell Bench Press',
-    meta: '4 Sets | 8 Reps',
-    description:
-      'Lower the barbell to your mid-chest and press it back up over your shoulders. A core compound move for chest, shoulders, and triceps.',
-    bodyPart: 'chest',
-    equipment: 'barbell',
-    level: 'intermediate',
-  },
-  {
-    id: '8',
-    title: 'Bodyweight Squat',
-    meta: '3 Sets | 15 Reps',
-    description:
-      'Stand with feet shoulder-width apart and lower your hips back and down as if sitting into a chair, then drive back up. Builds foundational leg strength.',
-    bodyPart: 'leg',
-    equipment: 'none',
-    level: 'beginner',
-  },
-  {
-    id: '9',
-    title: 'Barbell Back Squat',
-    meta: '4 Sets | 6 Reps',
-    description:
-      'Rest the barbell across your upper back and squat down until your thighs are parallel to the floor. A heavy compound lift for overall leg power.',
-    bodyPart: 'leg',
-    equipment: 'barbell',
-    level: 'advanced',
-  },
-  {
-    id: '10',
-    title: 'Standing Dumbbell Shoulder Press',
-    meta: '3 Sets | 10 Reps',
-    description:
-      'Press the dumbbells overhead from shoulder height until your arms are fully extended. Builds shoulder strength and stability.',
-    bodyPart: 'shoulders',
-    equipment: 'dumbbell',
-    level: 'intermediate',
-  },
-  {
-    id: '11',
-    title: 'Plank',
-    meta: '3 Sets | 30 Sec',
-    description:
-      'Hold your body in a straight line from head to heels, supported on your forearms and toes. Strengthens the entire core.',
-    bodyPart: 'abs',
-    equipment: 'none',
-    level: 'beginner',
-  },
-  {
-    id: '12',
-    title: 'Kettlebell Russian Twist',
-    meta: '3 Sets | 16 Reps',
-    description:
-      'Sit with knees bent and lean back slightly, rotating a kettlebell from side to side. Targets the obliques and rotational core strength.',
-    bodyPart: 'abs',
-    equipment: 'kettlebell',
-    level: 'intermediate',
-  },
-  {
-    id: '13',
-    title: 'Superman Back Extension',
-    meta: '3 Sets | 12 Reps',
-    description:
-      'Lie face down and simultaneously lift your arms, chest, and legs off the floor. Strengthens the lower back and improves posture.',
-    bodyPart: 'back',
-    equipment: 'none',
-    level: 'beginner',
-  },
-  {
-    id: '14',
-    title: 'Bench Tricep Dips',
-    meta: '3 Sets | 12 Reps',
-    description:
-      'Support your body on a bench with hands behind you and lower your hips toward the floor, then push back up. Isolates the triceps.',
-    bodyPart: 'triceps',
-    equipment: 'bench',
-    level: 'beginner',
-  },
-  {
-    id: '15',
-    title: 'Overhead Triceps Extension',
-    meta: '3 Sets | 10 Reps',
-    description:
-      'Hold a dumbbell with both hands behind your head and extend your arms upward. Stretches and strengthens the triceps.',
-    bodyPart: 'triceps',
-    equipment: 'dumbbell',
-    level: 'intermediate',
-  },
-  {
-    id: '16',
-    title: 'Goblet Squat',
-    meta: '3 Sets | 12 Reps',
-    description:
-      'Hold a dumbbell close to your chest and squat down between your knees. Builds quad strength while keeping the torso upright.',
-    bodyPart: 'quadriceps',
-    equipment: 'dumbbell',
-    level: 'intermediate',
-  },
-  {
-    id: '17',
-    title: 'Gym Ball Hamstring Curl',
-    meta: '3 Sets | 15 Reps',
-    description:
-      'Lie on your back with heels on an exercise ball and curl it toward your hips by lifting your pelvis. Targets the hamstrings and glutes.',
-    bodyPart: 'hamstrings',
-    equipment: 'gymball',
-    level: 'intermediate',
-  },
-  {
-    id: '18',
-    title: 'Jump Rope Cardio Burst',
-    meta: '5 Rounds | 1 Min',
-    description:
-      'Jump continuously over the rope at a steady rhythm. A full-body cardio move that also improves coordination.',
-    bodyPart: 'full-body',
-    equipment: 'jumprope',
-    level: 'beginner',
-  },
-  {
-    id: '19',
-    title: 'Weight Plate Front Raise',
-    meta: '3 Sets | 12 Reps',
-    description:
-      'Hold a weight plate with both hands and raise it straight in front of you to shoulder height. Builds the front deltoids.',
-    bodyPart: 'shoulders',
-    equipment: 'weightplate',
-    level: 'intermediate',
-  },
-  {
-    id: '20',
-    title: 'Push-Up to Plank',
-    meta: '3 Sets | 12 Reps',
-    description:
-      'Perform a push-up, then hold briefly in the plank position before lowering again. Combines upper-body pushing strength with core stability.',
-    bodyPart: 'upper-body',
-    equipment: 'none',
-    level: 'beginner',
-  },
+// Title/meta/description now live in exercises.<id> in the translation
+// files instead of being hardcoded here -- this array only keeps the
+// filterable metadata.
+const exercises: ExerciseMeta[] = [
+  { id: '1', bodyPart: 'biceps', equipment: 'dumbbell', level: 'beginner' },
+  { id: '2', bodyPart: 'biceps', equipment: 'dumbbell', level: 'beginner' },
+  { id: '3', bodyPart: 'biceps', equipment: 'dumbbell', level: 'intermediate' },
+  { id: '4', bodyPart: 'biceps', equipment: 'dumbbell', level: 'intermediate' },
+  { id: '5', bodyPart: 'biceps', equipment: 'dumbbell', level: 'advanced' },
+  { id: '6', bodyPart: 'chest', equipment: 'none', level: 'beginner' },
+  { id: '7', bodyPart: 'chest', equipment: 'barbell', level: 'intermediate' },
+  { id: '8', bodyPart: 'leg', equipment: 'none', level: 'beginner' },
+  { id: '9', bodyPart: 'leg', equipment: 'barbell', level: 'advanced' },
+  { id: '10', bodyPart: 'shoulders', equipment: 'dumbbell', level: 'intermediate' },
+  { id: '11', bodyPart: 'abs', equipment: 'none', level: 'beginner' },
+  { id: '12', bodyPart: 'abs', equipment: 'kettlebell', level: 'intermediate' },
+  { id: '13', bodyPart: 'back', equipment: 'none', level: 'beginner' },
+  { id: '14', bodyPart: 'triceps', equipment: 'bench', level: 'beginner' },
+  { id: '15', bodyPart: 'triceps', equipment: 'dumbbell', level: 'intermediate' },
+  { id: '16', bodyPart: 'quadriceps', equipment: 'dumbbell', level: 'intermediate' },
+  { id: '17', bodyPart: 'hamstrings', equipment: 'gymball', level: 'intermediate' },
+  { id: '18', bodyPart: 'full-body', equipment: 'jumprope', level: 'beginner' },
+  { id: '19', bodyPart: 'shoulders', equipment: 'weightplate', level: 'intermediate' },
+  { id: '20', bodyPart: 'upper-body', equipment: 'none', level: 'beginner' },
 ];
 
+// bodyPartsList.json / equipmentList.json use camelCase keys -- these ids
+// don't map 1:1 (e.g. "upper-body" -> "upperBody"), so translate through
+// small lookup tables instead of using the raw id as the key.
 const bodyPartOptions = [
-  { id: 'full-body', label: 'Full Body', icon: 'body-outline' },
-  { id: 'leg', label: 'Leg', icon: 'walk-outline' },
-  { id: 'shoulders', label: 'Shoulders', icon: 'body-outline' },
-  { id: 'biceps', label: 'Biceps', icon: 'barbell-outline' },
-  { id: 'abs', label: 'Abs', icon: 'body-outline' },
-  { id: 'back', label: 'Back', icon: 'body-outline' },
-  { id: 'triceps', label: 'Triceps', icon: 'barbell-outline' },
-  { id: 'chest', label: 'Chest', icon: 'body-outline' },
-  { id: 'quadriceps', label: 'Quadriceps', icon: 'walk-outline' },
-  { id: 'hamstrings', label: 'Hamstrings', icon: 'walk-outline' },
-  { id: 'upper-body', label: 'Upper Body', icon: 'body-outline' },
+  { id: 'full-body', labelKey: 'fullBody', icon: 'body-outline' },
+  { id: 'leg', labelKey: 'leg', icon: 'walk-outline' },
+  { id: 'shoulders', labelKey: 'shoulders', icon: 'body-outline' },
+  { id: 'biceps', labelKey: 'biceps', icon: 'barbell-outline' },
+  { id: 'abs', labelKey: 'abs', icon: 'body-outline' },
+  { id: 'back', labelKey: 'back', icon: 'body-outline' },
+  { id: 'triceps', labelKey: 'triceps', icon: 'barbell-outline' },
+  { id: 'chest', labelKey: 'chest', icon: 'body-outline' },
+  { id: 'quadriceps', labelKey: 'quadriceps', icon: 'walk-outline' },
+  { id: 'hamstrings', labelKey: 'hamstrings', icon: 'walk-outline' },
+  { id: 'upper-body', labelKey: 'upperBody', icon: 'body-outline' },
 ];
 
 const equipmentOptions = [
-  { id: 'dumbbell', label: 'Dumbbell', icon: 'barbell-outline' },
-  { id: 'jumprope', label: 'Jump Rope', icon: 'infinite-outline' },
-  { id: 'gymball', label: 'Exercise Ball', icon: 'ellipse-outline' },
-  { id: 'kettlebell', label: 'Kettlebell', icon: 'fitness-outline' },
-  { id: 'barbell', label: 'Barbell', icon: 'barbell-outline' },
-  { id: 'bench', label: 'Bench', icon: 'square-outline' },
-  { id: 'weightplate', label: 'Weight Plate', icon: 'ellipse-outline' },
+  { id: 'dumbbell', icon: 'barbell-outline' },
+  { id: 'jumprope', icon: 'infinite-outline' },
+  { id: 'gymball', icon: 'ellipse-outline' },
+  { id: 'kettlebell', icon: 'fitness-outline' },
+  { id: 'barbell', icon: 'barbell-outline' },
+  { id: 'bench', icon: 'square-outline' },
+  { id: 'weightplate', icon: 'ellipse-outline' },
 ];
 
 const levelOptions = [
-  { id: 'beginner', label: 'Beginner' },
-  { id: 'intermediate', label: 'Intermediate' },
-  { id: 'advanced', label: 'Advanced' },
+  { id: 'beginner', labelKey: 'beginner' },
+  { id: 'intermediate', labelKey: 'intermediate' },
+  { id: 'advanced', labelKey: 'advanced' },
 ];
 
 type FilterType = 'bodyPart' | 'equipment' | 'levels' | null;
 
 export default function ExerciseListScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ part?: string; equipment?: string; level?: string }>();
 
   const [search, setSearch] = useState('');
@@ -289,24 +114,25 @@ export default function ExerciseListScreen() {
 
   const filteredExercises = useMemo(() => {
     return exercises.filter((ex) => {
-      const matchesSearch = ex.title.toLowerCase().includes(search.toLowerCase());
+      const title = t(`exercises.${ex.id}.title`);
+      const matchesSearch = title.toLowerCase().includes(search.toLowerCase());
       const matchesBodyPart = selectedBodyParts.length === 0 || selectedBodyParts.includes(ex.bodyPart);
       const matchesEquipment = selectedEquipment.length === 0 || selectedEquipment.includes(ex.equipment);
       const matchesLevel = selectedLevels.length === 0 || selectedLevels.includes(ex.level);
       return matchesSearch && matchesBodyPart && matchesEquipment && matchesLevel;
     });
-  }, [search, selectedBodyParts, selectedEquipment, selectedLevels]);
+  }, [search, selectedBodyParts, selectedEquipment, selectedLevels, t]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>Search Exercise</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('common.searchExercise')}</Text>
 
       <View style={[styles.searchRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <Ionicons name="search-outline" size={18} color={theme.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: theme.text }]}
-          placeholder="Search Exercise"
+          placeholder={t('common.searchExercise') ?? undefined}
           placeholderTextColor={theme.textSecondary}
           value={search}
           onChangeText={setSearch}
@@ -325,7 +151,7 @@ export default function ExerciseListScreen() {
           onPress={() => setActiveFilter('bodyPart')}
         >
           <Text style={[styles.tabChipText, { color: selectedBodyParts.length ? '#FFFFFF' : theme.text }]}>
-            Body Parts
+            {t('common.bodyPartsTab')}
           </Text>
           <Ionicons name="chevron-down" size={14} color={selectedBodyParts.length ? '#FFFFFF' : theme.textSecondary} />
         </TouchableOpacity>
@@ -337,7 +163,7 @@ export default function ExerciseListScreen() {
           onPress={() => setActiveFilter('equipment')}
         >
           <Text style={[styles.tabChipText, { color: selectedEquipment.length ? '#FFFFFF' : theme.text }]}>
-            Equipment
+            {t('common.equipmentTab')}
           </Text>
           <Ionicons name="chevron-down" size={14} color={selectedEquipment.length ? '#FFFFFF' : theme.textSecondary} />
         </TouchableOpacity>
@@ -359,8 +185,12 @@ export default function ExerciseListScreen() {
                   <Ionicons name="body-outline" size={24} color={theme.textSecondary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.exerciseTitle, { color: theme.text }]}>{ex.title}</Text>
-                  <Text style={[styles.exerciseMeta, { color: theme.textSecondary }]}>{ex.meta}</Text>
+                  <Text style={[styles.exerciseTitle, { color: theme.text }]}>
+                    {t(`exercises.${ex.id}.title`)}
+                  </Text>
+                  <Text style={[styles.exerciseMeta, { color: theme.textSecondary }]}>
+                    {t(`exercises.${ex.id}.meta`)}
+                  </Text>
                 </View>
                 <Ionicons
                   name={isExpanded ? 'chevron-up' : 'chevron-forward'}
@@ -370,7 +200,7 @@ export default function ExerciseListScreen() {
               </View>
               {isExpanded && (
                 <Text style={[styles.exerciseDescription, { color: theme.textSecondary }]}>
-                  {ex.description}
+                  {t(`exercises.${ex.id}.description`)}
                 </Text>
               )}
             </TouchableOpacity>
@@ -379,7 +209,7 @@ export default function ExerciseListScreen() {
 
         {filteredExercises.length === 0 && (
           <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-            No exercises found. Try adjusting your filters.
+            {t('common.noExercisesFilter')}
           </Text>
         )}
       </ScrollView>
@@ -388,8 +218,10 @@ export default function ExerciseListScreen() {
       <FilterSheet
         visible={activeFilter === 'bodyPart'}
         onClose={() => setActiveFilter(null)}
-        title="Filter Body Part"
-        secondaryLabel={selectedBodyParts.length === bodyPartOptions.length ? 'Deselect all' : 'Select all'}
+        title={t('common.filterBodyPart')}
+        secondaryLabel={
+          selectedBodyParts.length === bodyPartOptions.length ? t('common.deselectAll') : t('common.selectAll')
+        }
         onSecondaryPress={() =>
           setSelectedBodyParts(
             selectedBodyParts.length === bodyPartOptions.length ? [] : bodyPartOptions.map((o) => o.id)
@@ -418,7 +250,9 @@ export default function ExerciseListScreen() {
                   >
                     <Ionicons name={opt.icon as any} size={22} color={theme.text} />
                   </View>
-                  <Text style={[styles.circleLabel, { color: theme.textSecondary }]}>{opt.label}</Text>
+                  <Text style={[styles.circleLabel, { color: theme.textSecondary }]}>
+                    {t(`bodyPartsList.${opt.labelKey}`)}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
@@ -430,8 +264,10 @@ export default function ExerciseListScreen() {
       <FilterSheet
         visible={activeFilter === 'equipment'}
         onClose={() => setActiveFilter(null)}
-        title="Filter Equipment"
-        secondaryLabel={selectedEquipment.length === equipmentOptions.length ? 'Deselect all' : 'Select all'}
+        title={t('common.filterEquipment')}
+        secondaryLabel={
+          selectedEquipment.length === equipmentOptions.length ? t('common.deselectAll') : t('common.selectAll')
+        }
         onSecondaryPress={() =>
           setSelectedEquipment(
             selectedEquipment.length === equipmentOptions.length ? [] : equipmentOptions.map((o) => o.id)
@@ -455,7 +291,9 @@ export default function ExerciseListScreen() {
                 onPress={() => toggleValue(selectedEquipment, setSelectedEquipment, opt.id)}
               >
                 <Ionicons name={opt.icon as any} size={26} color={theme.text} />
-                <Text style={[styles.equipmentCardLabel, { color: theme.textSecondary }]}>{opt.label}</Text>
+                <Text style={[styles.equipmentCardLabel, { color: theme.textSecondary }]}>
+                  {t(`equipmentList.${opt.id}`)}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -466,8 +304,8 @@ export default function ExerciseListScreen() {
       <FilterSheet
         visible={activeFilter === 'levels'}
         onClose={() => setActiveFilter(null)}
-        title="Filter Levels"
-        secondaryLabel="Clear all"
+        title={t('common.filterLevels')}
+        secondaryLabel={t('common.clearAll')}
         onSecondaryPress={() => setSelectedLevels([])}
         onShowResults={() => setActiveFilter(null)}
       >
@@ -480,7 +318,7 @@ export default function ExerciseListScreen() {
                 style={styles.checkRow}
                 onPress={() => toggleValue(selectedLevels, setSelectedLevels, opt.id)}
               >
-                <Text style={[styles.checkLabel, { color: theme.text }]}>{opt.label}</Text>
+                <Text style={[styles.checkLabel, { color: theme.text }]}>{t(`levels.${opt.labelKey}`)}</Text>
                 <View
                   style={[
                     styles.checkbox,
@@ -519,6 +357,7 @@ function FilterSheet({
   children: React.ReactNode;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
@@ -533,7 +372,7 @@ function FilterSheet({
         {children}
 
         <TouchableOpacity style={[styles.showResultsBtn, { backgroundColor: theme.primary }]} onPress={onShowResults}>
-          <Text style={styles.showResultsText}>Show results</Text>
+          <Text style={styles.showResultsText}>{t('common.showResults')}</Text>
         </TouchableOpacity>
       </View>
     </Modal>
@@ -541,7 +380,7 @@ function FilterSheet({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, paddingTop: 56 },
+ container: { flex: 1, paddingHorizontal: 20, paddingBottom: 20 },
   title: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
   searchRow: {
     flexDirection: 'row',

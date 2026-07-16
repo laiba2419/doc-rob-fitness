@@ -1,11 +1,12 @@
 import BackHeader from '@/components/BackHeader';
-import { weightEntries } from '@/data/report';
+import { addWeightEntry } from '@/services/reportservice';
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Alert, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 function toISODate(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -13,36 +14,36 @@ function toISODate(d: Date) {
 
 export default function AddWeightScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const [weight, setWeight] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const isValid = weight.trim().length > 0 && !Number.isNaN(Number(weight));
 
-  const handleSave = () => {
-    if (!isValid) return;
+  const handleSave = async () => {
+    if (!isValid || saving) return;
+    setSaving(true);
 
-    // NOTE: weightEntries is currently static demo data from data/report.ts.
-    // Pushing here updates the in-memory array for this session; wire this
-    // to your real persistence layer (AsyncStorage/DB) when ready.
-    weightEntries.push({
-      id: `w-${Date.now()}`,
-      date: toISODate(date),
-      value: Number(weight),
-    });
+    const { error } = await addWeightEntry(toISODate(date), Number(weight));
 
+    setSaving(false);
+    if (error) {
+      Alert.alert(t('report.couldNotSave'), error);
+      return;
+    }
     router.back();
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>Add Weight</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('report.addWeightTitle')}</Text>
 
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        {/* Weight input */}
         <View style={styles.fieldRow}>
           <TextInput
             style={[styles.weightInput, { color: theme.text, borderColor: theme.border }]}
@@ -52,10 +53,9 @@ export default function AddWeightScreen() {
             value={weight}
             onChangeText={setWeight}
           />
-          <Text style={[styles.unitLabel, { color: theme.textSecondary }]}>kg</Text>
+          <Text style={[styles.unitLabel, { color: theme.textSecondary }]}>{t('report.kgUnit')}</Text>
         </View>
 
-        {/* Date picker trigger */}
         <TouchableOpacity
           style={[styles.dateRow, { borderColor: theme.border }]}
           onPress={() => setShowDatePicker(true)}
@@ -76,13 +76,12 @@ export default function AddWeightScreen() {
           />
         )}
 
-        {/* Save */}
         <TouchableOpacity
           style={[styles.saveBtn, { backgroundColor: isValid ? theme.primary : theme.border }]}
           onPress={handleSave}
-          disabled={!isValid}
+          disabled={!isValid || saving}
         >
-          <Text style={styles.saveBtnText}>Save</Text>
+          <Text style={styles.saveBtnText}>{saving ? t('report.savingBtn') : t('report.saveBtn')}</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -37,6 +37,15 @@ type UserProfileContextType = {
   isLoaded: boolean;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   setProfile: (profile: UserProfile) => void;
+  /** Wipes the locally cached profile -- call this on logout and after
+   * account deletion, so the next account that logs in on this device
+   * doesn't inherit the previous user's cached name/photo/email. */
+  clearProfile: () => Promise<void>;
+  /** Fetches this specific user's profile fresh from Supabase (the source
+   * of truth) and overwrites whatever was cached locally. Call this right
+   * after a successful login/signup so the correct account's data shows,
+   * instead of relying on whatever happened to be cached on the device. */
+  loadProfileForUser: (userId: string) => Promise<void>;
 };
 
 const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
@@ -110,8 +119,66 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
     await syncProfileToSupabase(next);
   };
 
+  // ✅ NEW: resets everything back to blank and removes the cached copy from
+  // the device -- without this, a new/different account on the same phone
+  // would keep showing the previous user's name, email, and photo.
+  const clearProfile = async () => {
+    setProfileState(defaultProfile);
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      console.warn('Failed to clear cached user profile', error);
+    }
+  };
+
+  // ✅ NEW: pulls the real profile for THIS user from Supabase (the source
+  // of truth) and overwrites the local cache with it. Call this right after
+  // login/signup succeeds.
+  const loadProfileForUser = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('full_name, gender, age, height, weight, mobile')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Failed to load profile for user:', error.message);
+      return;
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const [firstName, ...rest] = (data?.full_name ?? '').split(' ');
+
+    const next: UserProfile = {
+      ...defaultProfile,
+      firstName: firstName || '',
+      lastName: rest.join(' ') || '',
+      email: user?.email ?? '',
+      gender: (data?.gender as UserProfile['gender']) ?? 'Male',
+      age: data?.age ?? null,
+      height: data?.height ?? null,
+      weight: data?.weight ?? null,
+      mobile: data?.mobile ?? '',
+      // avatarUri intentionally left blank -- it isn't stored in Supabase
+      // yet (see note below), so each new login starts with no photo
+      // rather than inheriting a stale local one.
+    };
+
+    setProfileState(next);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch (error) {
+      console.warn('Failed to cache loaded profile', error);
+    }
+  };
+
   return (
-    <UserProfileContext.Provider value={{ profile, isLoaded, updateProfile, setProfile }}>
+    <UserProfileContext.Provider
+      value={{ profile, isLoaded, updateProfile, setProfile, clearProfile, loadProfileForUser }}
+    >
       {children}
     </UserProfileContext.Provider>
   );

@@ -1,30 +1,56 @@
 import BackHeader from '@/components/BackHeader';
 import { useUserProfile } from '@/context/UserProfileContext';
-import { getCategoryById, getMealsForUser } from '@/data/diets';
+import { DietCategory, fetchDietCategoryWithMeals, getMealsForUser, Meal } from '@/data/dietService';
 import { useTheme } from '@/theme/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function DietCategoryScreen() {
   const { theme } = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useUserProfile();
+  const { t, i18n } = useTranslation();
 
-  const category = useMemo(() => getCategoryById(id ?? ''), [id]);
+  const [category, setCategory] = useState<DietCategory | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const meals = useMemo(() => {
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      setLoading(true);
+      const cat = await fetchDietCategoryWithMeals(id ?? '', i18n.language);
+      if (isMounted) {
+        setCategory(cat);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [id, i18n.language]);
+
+  const meals: Meal[] = useMemo(() => {
     if (!category) return [];
     const personalized = getMealsForUser(category, profile.age ?? undefined, profile.weight ?? undefined);
     return personalized.length > 0 ? personalized : category.meals;
   }, [category, profile.age, profile.weight]);
 
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
+
   if (!category) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <BackHeader />
-        <Text style={[styles.title, { color: theme.text }]}>Diet not found</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('diet.categoryNotFound')}</Text>
       </View>
     );
   }
@@ -43,7 +69,7 @@ export default function DietCategoryScreen() {
           >
             <Image source={{ uri: meal.image }} style={styles.image} />
             <View style={styles.proBadge}>
-              <Text style={styles.proBadgeText}>Pro</Text>
+              <Text style={styles.proBadgeText}>{t('diet.pro')}</Text>
             </View>
             <Text style={[styles.label, { color: theme.text }]} numberOfLines={2}>
               {meal.name}
@@ -56,7 +82,8 @@ export default function DietCategoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, paddingTop: 56 },
+  container: { flex: 1, paddingHorizontal: 20, paddingBottom: 20 },
+  centered: { justifyContent: 'center', alignItems: 'center' },
   title: { fontSize: 20, fontWeight: '700', marginBottom: 20 },
   list: { paddingBottom: 20 },
   card: { borderRadius: 16, overflow: 'hidden', marginBottom: 16 },

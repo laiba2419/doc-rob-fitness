@@ -6,14 +6,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 
-export default function VerifyOTP() {
+export default function VerifyEmailScreen() {
   const { theme } = useTheme();
   const router = useRouter();
-  const { verifyPhoneOtp, sendPhoneOtp } = useAuth();
-  const { phone } = useLocalSearchParams<{ phone: string }>();
+  const { verifySignupOtp, resendSignupOtp } = useAuth();
+  const { email } = useLocalSearchParams<{ email: string }>();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const inputsRef = useRef<Array<TextInput | null>>([]);
+
+  console.log('[VerifyEmailScreen] mounted with email param:', email);
 
   const handleChange = (text: string, index: number) => {
     const newOtp = [...otp];
@@ -27,43 +29,56 @@ export default function VerifyOTP() {
 
   const handleVerify = async () => {
     const code = otp.join('');
+    console.log('[VerifyEmailScreen] handleVerify called. code =', code, 'email =', email);
+
     if (code.length < 6) {
+      console.log('[VerifyEmailScreen] Code incomplete, aborting.');
       Alert.alert('Incomplete Code', 'Please enter the full 6 digit code.');
       return;
     }
-    if (!phone) {
-      Alert.alert('Error', 'Phone number missing, please go back and try again.');
+    if (!email) {
+      console.log('[VerifyEmailScreen] Email param missing, aborting.');
+      Alert.alert('Error', 'Email missing, please go back and try again.');
       return;
     }
 
     setLoading(true);
-    const { error } = await verifyPhoneOtp(phone, code);
+    console.log('[VerifyEmailScreen] Calling verifySignupOtp...');
+    const { error } = await verifySignupOtp(email, code);
+    console.log('[VerifyEmailScreen] verifySignupOtp returned. error =', error);
     setLoading(false);
 
     if (error) {
+      console.log('[VerifyEmailScreen] Verification failed:', error);
       Alert.alert('Verification Failed', error);
       return;
     }
 
-    router.push('/home');
+    console.log('[VerifyEmailScreen] Verified successfully — navigating to /setup/details');
+    router.replace('/setup/details');
   };
 
   const handleResend = async () => {
-    if (!phone) return;
-    const { error } = await sendPhoneOtp(phone);
+    console.log('[VerifyEmailScreen] handleResend called. email =', email);
+    if (!email) {
+      console.log('[VerifyEmailScreen] No email, aborting resend.');
+      return;
+    }
+    const { error } = await resendSignupOtp(email);
+    console.log('[VerifyEmailScreen] resendSignupOtp returned. error =', error);
     if (error) {
       Alert.alert('Failed to Resend', error);
     } else {
-      Alert.alert('Code Sent', 'A new code has been sent to your phone.');
+      Alert.alert('Code Sent', 'A new verification code has been sent to your email.');
     }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <BackHeader />
-      <Text style={[styles.title, { color: theme.text }]}>OTP Verification</Text>
+      <Text style={[styles.title, { color: theme.text }]}>Verify Your Email</Text>
       <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-        OTP has been sent to your number, please enter the OTP to verify
+        A verification code has been sent to your email. Please enter it below.
       </Text>
 
       <View style={styles.otpRow}>

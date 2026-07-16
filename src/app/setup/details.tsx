@@ -6,10 +6,12 @@ import { useUserProfile } from '@/context/UserProfileContext';
 import { useTheme } from '@/theme/ThemeContext';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 
 export default function InputDetails() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { updateProfile } = useUserProfile();
   const [firstName, setFirstName] = useState('');
@@ -26,13 +28,29 @@ export default function InputDetails() {
       <BackHeader />
       <StepProgressBar totalSteps={4} currentStep={1} />
 
-      <Text style={[styles.title, { color: theme.text }]}>Let us know about yourself</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('onboarding.detailsTitle')}</Text>
 
-      <InputField label="First Name" placeholder="Enter first name" value={firstName} onChangeText={setFirstName} />
-      <InputField label="Last Name" placeholder="Enter last name" value={lastName} onChangeText={setLastName} />
-      <InputField label="Phone Number" placeholder="+92 300 1234567" value={phoneNumber} onChangeText={setPhoneNumber} keyboardType="phone-pad" />
+      <InputField
+        label={t('profile.editProfile.firstName')}
+        placeholder={t('profile.editProfile.firstNamePlaceholder')}
+        value={firstName}
+        onChangeText={setFirstName}
+      />
+      <InputField
+        label={t('profile.editProfile.lastName')}
+        placeholder={t('profile.editProfile.lastNamePlaceholder')}
+        value={lastName}
+        onChangeText={setLastName}
+      />
+      <InputField
+        label={t('profile.editProfile.mobileNumber')}
+        placeholder={t('profile.editProfile.mobilePlaceholder')}
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+        keyboardType="phone-pad"
+      />
 
-      <PrimaryButton title="Next" onPress={handleNext} style={{ marginTop: 8 }} />
+      <PrimaryButton title={t('onboarding.next')} onPress={handleNext} style={{ marginTop: 8 }} />
     </ScrollView>
   );
 }

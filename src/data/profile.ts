@@ -128,8 +128,8 @@ export type Language = { code: string; name: string; nativeName: string };
 
 export const languages: Language[] = [
   { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'ur', name: 'Urdu', nativeName: 'Hindi' },
-  { code: 'ar', name: 'Arabic', nativeName: 'French' },
-  { code: 'es', name: 'Spanish', nativeName: 'German' },
-  { code: 'fr', name: 'French', nativeName: 'Spanish' },
+  { code: 'ur', name: 'Urdu', nativeName: 'اردو' },
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español' },
+  { code: 'fr', name: 'French', nativeName: 'Français' },
 ];

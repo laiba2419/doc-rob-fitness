@@ -1,10 +1,14 @@
 import BackHeader from '@/components/BackHeader';
 import BottomNav from '@/components/BottomNav';
 import LineChart from '@/components/LineChart';
-import { formatDate, generateId, stepsEntries } from '@/data/report';
+import { addStepsEntry, fetchStepsEntries, formatDate, StepsEntry } from '@/services/reportservice';
 import { useTheme } from '@/theme/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Alert,
     Dimensions,
@@ -20,31 +24,57 @@ import {
 
 const SCREEN_W = Dimensions.get('window').width;
 
+function toISODate(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+
 export default function AddStepsScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const [value, setValue] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [stepsEntries, setStepsEntries] = useState<StepsEntry[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+      fetchStepsEntries().then((data) => {
+        if (isActive) setStepsEntries(data);
+      });
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   const chartData = [...stepsEntries]
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(-7)
     .map((e) => ({ label: formatDate(e.date), value: e.value }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const num = parseInt(value, 10);
     if (isNaN(num) || num < 0 || num > 100000) {
-      Alert.alert('Invalid', 'Please enter a valid step count.');
+      Alert.alert(t('report.invalidTitle'), t('report.invalidSteps'));
       return;
     }
-    if (!date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      Alert.alert('Invalid', 'Please enter date as YYYY-MM-DD.');
+    const isoDate = toISODate(date);
+    setSaving(true);
+    const { error } = await addStepsEntry(isoDate, num);
+    setSaving(false);
+
+    if (error) {
+      Alert.alert(t('report.couldNotSave'), error);
       return;
     }
-    stepsEntries.push({ id: generateId(), date, value: num });
-    Alert.alert('Saved!', `${num.toLocaleString()} steps logged for ${formatDate(date)}.`, [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    Alert.alert(
+      t('report.savedTitle'),
+      t('report.savedStepsMsg', { count: num.toLocaleString(), date: formatDate(isoDate) }),
+      [{ text: t('report.ok'), onPress: () => router.back() }]
+    );
   };
 
   return (
@@ -52,38 +82,56 @@ export default function AddStepsScreen() {
       style={[styles.flex, { backgroundColor: theme.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <BackHeader />
+      <View style={{ paddingHorizontal: 20 }}>
+        <BackHeader />
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        <Text style={[styles.title, { color: theme.text }]}>Log Steps</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('report.logSteps')}</Text>
 
         <View style={[styles.chartCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.chartLabel, { color: theme.textSecondary }]}>Recent trend</Text>
+          <Text style={[styles.chartLabel, { color: theme.textSecondary }]}>{t('report.recentTrend')}</Text>
           <LineChart data={chartData} width={SCREEN_W - 72} height={120} showLabels={false} />
         </View>
 
         <View style={[styles.formCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Steps</Text>
+          <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>{t('report.stepsField')}</Text>
           <TextInput
             style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
-            placeholder="e.g. 8500"
+            placeholder={t('report.stepsPlaceholder') as string}
             placeholderTextColor={theme.placeholder}
             keyboardType="number-pad"
             value={value}
             onChangeText={setValue}
           />
 
-          <Text style={[styles.fieldLabel, { color: theme.textSecondary, marginTop: 14 }]}>Date (YYYY-MM-DD)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
-            placeholder="2025-06-30"
-            placeholderTextColor={theme.placeholder}
-            value={date}
-            onChangeText={setDate}
-          />
+          <Text style={[styles.fieldLabel, { color: theme.textSecondary, marginTop: 14 }]}>{t('report.dateField')}</Text>
+          <TouchableOpacity
+            style={[styles.dateRow, { borderColor: theme.border }]}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text style={[styles.dateText, { color: theme.text }]}>{toISODate(date)}</Text>
+            <Ionicons name="calendar-outline" size={18} color={theme.textSecondary} />
+          </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.saveBtn, { backgroundColor: theme.primary }]} onPress={handleSave}>
-            <Text style={styles.saveBtnText}>Save</Text>
+          {showDatePicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(_, selected) => {
+                setShowDatePicker(Platform.OS === 'ios');
+                if (selected) setDate(selected);
+              }}
+            />
+          )}
+
+          <TouchableOpacity
+            style={[styles.saveBtn, { backgroundColor: theme.primary }]}
+            onPress={handleSave}
+            disabled={saving}
+          >
+            <Text style={styles.saveBtnText}>{saving ? t('report.savingBtn') : t('report.saveBtn')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -95,6 +143,7 @@ export default function AddStepsScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+
   scroll: { paddingHorizontal: 20, paddingBottom: 100 },
   title: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
   chartCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16 },
@@ -102,6 +151,16 @@ const styles = StyleSheet.create({
   formCard: { borderRadius: 16, borderWidth: 1, padding: 16 },
   fieldLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6 },
   input: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15 },
+  dateRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  dateText: { fontSize: 14, fontWeight: '500' },
   saveBtn: { marginTop: 20, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   saveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 });

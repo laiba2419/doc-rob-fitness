@@ -1,17 +1,26 @@
 import { useTheme } from '@/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-const monthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+// Month keys map to the "months" section in the locale JSON files
+// (jan, feb, mar ... dec) -- order 0-11 matches Date.getMonth().
+const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
-const weekdayHeaders = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+// Weekday keys map to the "days" section -- order Mon-Sun to match the
+// Monday-first grid used below.
+const weekdayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
+// ✅ FIXED: local date use karta hai (device/Pakistan time), UTC nahi --
+// home.tsx ke dateKey() se match karta hai ab. Purana version toISOString()
+// use karta tha jo UTC deta hai -- isi wajah se "10 pe tap karo to 9 select
+// ho jata tha" wala bug aa raha tha.
 function dateKey(d: Date) {
-  return d.toISOString().slice(0, 10);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // Builds a 6-row grid (42 cells) for the given month, starting on Monday,
@@ -48,10 +57,16 @@ export default function CalendarPickerModal({
   scheduledDateKeys = [],
 }: CalendarPickerModalProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   const today = useMemo(() => new Date(), []);
+
+  // ✅ Jab modal khule to selectedDateKey (jo Home se aa raha hai) ke month
+  // se shuru ho -- pehle hamesha "aaj" ke month se start hota tha, is liye
+  // agar aap kisi doosre mahine ki date select kar chuki hon aur dobara
+  // calendar kholein, to galat month dikhta tha.
   const [viewDate, setViewDate] = useState(() => {
-    const d = new Date();
+    const d = new Date(selectedDateKey + 'T00:00:00');
     d.setDate(1);
     return d;
   });
@@ -95,7 +110,7 @@ export default function CalendarPickerModal({
               <Ionicons name="chevron-back" size={20} color={theme.text} />
             </TouchableOpacity>
             <Text style={[styles.monthLabel, { color: theme.text }]}>
-              {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()}
+              {t(`months.${monthKeys[viewDate.getMonth()]}`)} {viewDate.getFullYear()}
             </Text>
             <TouchableOpacity onPress={goNextMonth} style={styles.navBtn}>
               <Ionicons name="chevron-forward" size={20} color={theme.text} />
@@ -104,9 +119,9 @@ export default function CalendarPickerModal({
 
           {/* Weekday headers */}
           <View style={styles.weekHeaderRow}>
-            {weekdayHeaders.map((w, i) => (
+            {weekdayKeys.map((wk, i) => (
               <Text key={i} style={[styles.weekHeaderText, { color: theme.textSecondary }]}>
-                {w}
+                {t(`days.${wk}`).charAt(0)}
               </Text>
             ))}
           </View>
@@ -179,49 +194,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
-  card: {
-    width: '100%',
-    maxWidth: 360,
-    borderRadius: 20,
-    padding: 16,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
+  card: { width: '100%', maxWidth: 360, borderRadius: 20, padding: 16 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   navBtn: { padding: 4 },
   monthLabel: { fontSize: 16, fontWeight: '700' },
-
   weekHeaderRow: { flexDirection: 'row', marginBottom: 4 },
-  weekHeaderText: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
+  weekHeaderText: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '600' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  cell: {
-    width: '14.2857%',
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cellInner: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  cell: { width: '14.2857%', aspectRatio: 1, justifyContent: 'center', alignItems: 'center' },
+  cellInner: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
   cellText: { fontSize: 13, fontWeight: '600' },
-  dot: {
-    position: 'absolute',
-    bottom: 6,
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
+  dot: { position: 'absolute', bottom: 6, width: 5, height: 5, borderRadius: 2.5 },
 });
