@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "GetFit",
-    "slug": "GetFit",
+    "name": "Doc-Rob-Fitness",
+    "slug": "Doc-Rob-Fitness",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "getfit",
+    "scheme": "doc-rob-fitness",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.sp22bse050.GetFit"
+      "package": "com.sp22bse050.DocRobFitness"
     },
     "web": {
       "output": "static",
@@ -45,9 +45,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "4a26e5c4-54d4-4699-89f3-3b82713fded7"
+        "projectId": "802a1b28-46b4-4804-a9c9-d19554b59b36"
       }
     },
-    "owner": "abdullahhrajput"
+    "owner": "sp22-bse-050"
   }
 }

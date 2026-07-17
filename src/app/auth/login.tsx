@@ -113,41 +113,6 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.orRow}>
-        <View style={[styles.orLine, { backgroundColor: theme.border }]} />
-        <Text style={[styles.orText, { color: isLight ? '#4A4A4A' : theme.textSecondary }]}>{t('auth.login.or')}</Text>
-        <View style={[styles.orLine, { backgroundColor: theme.border }]} />
-      </View>
-
-      <View style={styles.socialRow}>
-        <TouchableOpacity
-          style={[
-            styles.socialBtn,
-            { backgroundColor: isLight ? theme.text : theme.surface, borderColor: theme.border },
-          ]}
-          onPress={() => router.push('/auth/continue-phone')}
-        >
-          <Ionicons name="phone-portrait-outline" size={20} color={isLight ? '#FFFFFF' : theme.text} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.socialBtn,
-            { backgroundColor: isLight ? theme.text : theme.surface, borderColor: theme.border },
-          ]}
-          onPress={() => Alert.alert(t('auth.login.comingSoonTitle'), t('auth.login.comingSoonMsg'))}
-        >
-          <Ionicons name="logo-google" size={20} color={isLight ? '#FFFFFF' : theme.text} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.socialBtn,
-            { backgroundColor: isLight ? theme.text : theme.surface, borderColor: theme.border },
-          ]}
-        >
-          <Ionicons name="logo-apple" size={20} color={isLight ? '#FFFFFF' : theme.text} />
-        </TouchableOpacity>
-      </View>
-
       {loading ? (
         <ActivityIndicator color={theme.primary} style={{ marginTop: 8, marginBottom: 16 }} />
       ) : (
@@ -198,18 +163,6 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 4,
     borderWidth: 1.5,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  orRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 24, gap: 12 },
-  orLine: { flex: 1, height: 1 },
-  orText: { fontSize: 13, fontWeight: '600' },
-  socialRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 16, marginBottom: 8 },
-  socialBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

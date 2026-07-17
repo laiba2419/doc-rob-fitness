@@ -120,8 +120,12 @@ export function parseDaysToIndexes(days: string[]): number[] {
  * This is used for Exercise reminders (specific clock time + specific days).
  *
  * `dayIndexes` uses the app-wide convention 0 = Sun ... 6 = Sat. Internally
- * this is converted to expo-notifications' CALENDAR trigger `weekday` field,
+ * this is converted to expo-notifications' WEEKLY trigger `weekday` field,
  * which uses 1 = Sun ... 7 = Sat.
+ *
+ * Uses the WEEKLY trigger type (instead of CALENDAR) because CALENDAR
+ * triggers are not supported on Android in current expo-notifications
+ * versions -- WEEKLY works on both Android and iOS and repeats automatically.
  *
  * Returns one notification id per unique day selected -- all of these ids
  * must be stored (e.g. in `notification_ids`) so they can all be cancelled
@@ -156,11 +160,10 @@ export async function scheduleReminderNotifications({
         sound: true,
       },
       trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
         weekday,
         hour: hour24,
         minute,
-        repeats: true,
       },
     });
 

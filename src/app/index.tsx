@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -11,15 +11,15 @@ export default function SplashScreen() {
   const { session, loading } = useAuth();
 
   useEffect(() => {
-    // Jab tak Supabase session load ho raha hai, wait karo — koi decision mat lo
+    // Jab tak Supabase session load ho raha hai, wait karo â€” koi decision mat lo
     if (loading) return;
 
     const timer = setTimeout(() => {
       if (session) {
-        // Session mil gaya (user pehle se login hai) → seedha Home pe bhejo
+        // Session mil gaya (user pehle se login hai) â†’ seedha Home pe bhejo
         router.replace('/home');
       } else {
-        // Koi session nahi → login/onboarding pe bhejo
+        // Koi session nahi â†’ login/onboarding pe bhejo
         router.replace('/onboarding/screen');
       }
     }, 1800);
@@ -34,7 +34,7 @@ export default function SplashScreen() {
           <Ionicons name="fitness" size={40} color={theme.primary} />
         </View>
         <Text style={[styles.brand, { color: theme.primary }]}>FITNESS</Text>
-        <Text style={[styles.title, { color: theme.text }]}>GetFit</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Doc-rob-fitness</Text>
       </View>
       <Text style={[styles.footer, { color: theme.textSecondary }]}>v1.0.0</Text>
     </View>

@@ -31,8 +31,6 @@ export default function FitBotScreen() {
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ i18n.language dependency add ki taake language switch karne pe FAQs
-  // (question + answer dono) dobara fetch+translate ho jayen.
   useEffect(() => {
     let isActive = true;
     (async () => {
@@ -49,14 +47,12 @@ export default function FitBotScreen() {
     };
   }, [i18n.language]);
 
-  // User ek FAQ question pe tap kare -- uska pehle se likha hua answer turant chat mein aa jaye
   const handleFaqPress = (faq: FaqItem) => {
     const userMsg: ChatMessage = { id: Date.now().toString(), from: 'user', text: faq.question };
     const botMsg: ChatMessage = { id: (Date.now() + 1).toString(), from: 'bot', text: faq.answer };
     setMessages((prev) => [...prev, userMsg, botMsg]);
   };
 
-  // Free-text input -- agar wo kisi FAQ se match kare to uska answer, warna default reply
   const sendMessage = (text: string) => {
     if (!text.trim()) return;
     const userMsg: ChatMessage = { id: Date.now().toString(), from: 'user', text };
@@ -93,11 +89,10 @@ export default function FitBotScreen() {
     >
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.headerRow}>
-          <BackHeader />
+          <View style={styles.backWrap}>
+            <BackHeader />
+          </View>
           <Text style={[styles.title, { color: theme.text }]}>{t('common.fitbotTitle')}</Text>
-          <TouchableOpacity style={styles.menuBtn}>
-            <Ionicons name="ellipsis-horizontal" size={20} color={theme.text} />
-          </TouchableOpacity>
         </View>
 
         {messages.length === 0 ? (
@@ -138,7 +133,6 @@ export default function FitBotScreen() {
               </View>
             ))}
 
-            {/* Suggested questions bottom mein bhi milte rahein taake user aur pooch sake */}
             <View style={[styles.promptsWrap, { marginTop: 12 }]}>
               {faqs.map((faq) => (
                 <TouchableOpacity
@@ -177,10 +171,11 @@ export default function FitBotScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, paddingTop: 56 },
+
   centered: { justifyContent: 'center', alignItems: 'center' },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  title: { fontSize: 17, fontWeight: '700' },
-  menuBtn: { padding: 4 },
+  headerRow: { position: 'relative', alignItems: 'center', justifyContent: 'center', marginBottom: 10, height: 40 },
+  backWrap: { position: 'absolute', left: 0, top: 0, zIndex: 1 },
+  title: { fontSize: 20, fontWeight: '700' },
 
   greetingWrap: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', gap: 16, paddingVertical: 40 },
   botIconWrap: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center' },

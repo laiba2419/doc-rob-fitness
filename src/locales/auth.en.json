@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "seeAll": "See All",
     "search": "Search exercises",
@@ -6,13 +6,13 @@
     "addWorkout": "Add Workout",
     "noWorkoutScheduled": "No workout scheduled for {{date}}",
     "schedule": "Schedule",
-    "scheduleFor": "Schedule · {{date}}",
+    "scheduleFor": "Schedule Â· {{date}}",
     "bodyPartsExercise": "Body Parts Exercise",
     "equipmentBasedExercise": "Equipment Based Exercise",
     "workoutTypes": "Workout Types",
     "workoutLevels": "Workout Levels",
     "readyMadeRoutines": "Ready-made Routines",
-    "chooseBodyPartFor": "{{level}} · Choose Body Part",
+    "chooseBodyPartFor": "{{level}} Â· Choose Body Part",
     "pro": "PRO",
     "chooseLanguage": "Choose Language",
     "greeting": "Hello, {{name}}",
@@ -425,23 +425,23 @@
       "yourNamePlaceholder": "Your Name"
     },
     "aboutUs": {
-      "appName": "GetFit",
+      "appName": "Doc-rob-fitness",
       "version": "Version 1.0.0",
-      "description": "GetFit is your all-in-one fitness companion — built to help you train smarter, eat better, and stay consistent. From personalized workout plans to nutrition tracking and daily reminders, GetFit keeps you motivated every step of the way.",
-      "email": "support@getfitapp.com",
-      "website": "www.getfitapp.com",
-      "copyright": "© 2026 GetFit. All rights reserved."
+      "description": "Doc-rob-fitness is your all-in-one fitness companion â€” built to help you train smarter, eat better, and stay consistent. From personalized workout plans to nutrition tracking and daily reminders, Doc-rob-fitness keeps you motivated every step of the way.",
+      "email": "support@Doc-rob-fitnessapp.com",
+      "website": "www.Doc-rob-fitnessapp.com",
+      "copyright": "Â© 2026 Doc-rob-fitness. All rights reserved."
     },
     "about": {
       "title": "About the App",
       "privacyPolicy": "Privacy Policy",
       "termsConditions": "Terms & Conditions",
       "aboutUs": "About Us",
-      "version": "GetFit Version 1.0.0"
+      "version": "Doc-rob-fitness Version 1.0.0"
     },
     "appTheme": {
       "title": "App Theme",
-      "subtitle": "Choose how GetFit should look. Currently using {{mode}} mode.",
+      "subtitle": "Choose how Doc-rob-fitness should look. Currently using {{mode}} mode.",
       "dark": "Dark",
       "light": "Light",
       "options": {
@@ -510,15 +510,15 @@
       "title": "Terms & Conditions",
       "lastUpdated": "Last updated: June 2026",
       "s1Heading": "1. Acceptance of Terms",
-      "s1Body": "By creating an account and using GetFit, you agree to abide by these Terms & Conditions.",
+      "s1Body": "By creating an account and using Doc-rob-fitness, you agree to abide by these Terms & Conditions.",
       "s2Heading": "2. Use of the App",
-      "s2Body": "GetFit provides fitness tracking, workout plans, and diet guidance for personal use only. You agree not to misuse the app or its content.",
+      "s2Body": "Doc-rob-fitness provides fitness tracking, workout plans, and diet guidance for personal use only. You agree not to misuse the app or its content.",
       "s3Heading": "3. Health Disclaimer",
-      "s3Body": "GetFit is not a substitute for professional medical advice. Consult a physician before starting any new exercise or diet program.",
+      "s3Body": "Doc-rob-fitness is not a substitute for professional medical advice. Consult a physician before starting any new exercise or diet program.",
       "s4Heading": "4. Subscriptions",
       "s4Body": "Premium features require an active subscription. Subscriptions renew automatically unless cancelled before the renewal date.",
       "s5Heading": "5. Limitation of Liability",
-      "s5Body": "GetFit is provided \"as is\" without warranties of any kind. We are not liable for any injury or damage resulting from use of the app."
+      "s5Body": "Doc-rob-fitness is provided \"as is\" without warranties of any kind. We are not liable for any injury or damage resulting from use of the app."
     }
   },
   "auth": {
@@ -548,7 +548,7 @@
     },
     "signup": {
       "title": "Create Account",
-      "subtitle": "Sign up to get started with GetFit",
+      "subtitle": "Sign up to get started with Doc-rob-fitness",
       "confirmPasswordLabel": "Confirm Password",
       "confirmPasswordPlaceholder": "Re-enter password",
       "signUpButton": "Sign Up",
@@ -631,3 +631,4 @@
     "forDate": "{{level}} for {{date}}"
   }
 }
+

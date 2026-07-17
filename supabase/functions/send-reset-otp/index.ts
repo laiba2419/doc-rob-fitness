@@ -1,6 +1,6 @@
 import { serve } from "serve"
 import { createClient } from "@supabase/supabase-js"
-import { SMTPClient } from "https://deno.land/x/denomailer/mod.ts"
+import { SMTPClient } from "denomailer"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -62,7 +62,7 @@ serve(async (req) => {
 
     try {
       await client.send({
-        from: `GetFit <${gmailUser}>`,
+        from: `Doc Rob Fitness <${gmailUser}>`,
         to: email,
         subject: 'Your Password Reset Code',
         html: `<p>Your OTP code is: <strong>${otp}</strong></p><p>This code expires in 10 minutes.</p>`,
